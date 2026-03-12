@@ -1,4 +1,4 @@
-name: Rabie_New_Start
+name: Rabie_Unified_Build
 on: [push]
 jobs:
   build:
@@ -8,46 +8,58 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Create_And_Build
+      - name: Create_And_Build_APK
         run: |
-          # 1. صنع المجلدات
-          mkdir -p app/src/main/java/com/rabie/newapp app/src/main/res/layout
+          # 1. صنع المجلدات الأساسية
+          mkdir -p app/src/main/java/com/rabie/finalapp
           
-          # 2. ملف الإعدادات
-          echo "rootProject.name = 'RabieNew'; include ':app'" > settings.gradle
-          
-          # 3. ملف البناء (Gradle)
-          cat <<EOF > build.gradle
-          plugins { id 'com.android.application' version '8.2.2' apply false }
+          # 2. ملف الإعدادات مع تعريف المكتبات (هذا هو الصح)
+          cat <<EOF > settings.gradle
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = 'RabieFinal'
+          include ':app'
           EOF
 
+          # 3. ملف بناء المشروع (Root Build File)
+          echo "buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:8.2.2' } }" > build.gradle
+
+          # 4. ملف بناء التطبيق (App Build File)
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' }
           android {
-              namespace 'com.rabie.newapp'
+              namespace 'com.rabie.finalapp'
               compileSdk 34
               defaultConfig {
-                  applicationId "com.rabie.newapp"
+                  applicationId "com.rabie.finalapp"
                   minSdk 21
                   targetSdk 34
                   versionCode 1
                   versionName "1.0"
               }
           }
-          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1' }
+          dependencies { 
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.9.0'
+          }
           EOF
 
-          # 4. المانيفست وكود الجافا
-          echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Rabie New"><activity android:name="com.rabie.newapp.MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          echo 'package com.rabie.newapp; import android.app.Activity; import android.os.Bundle; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); android.widget.TextView t = new android.widget.TextView(this); t.setText("Success on New Repo!"); setContentView(t); } }' > app/src/main/java/com/rabie/newapp/MainActivity.java
+          # 5. المانيفست وكود الجافا
+          echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Rabie App"><activity android:name="com.rabie.finalapp.MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          echo 'package com.rabie.finalapp; import android.app.Activity; import android.os.Bundle; import android.widget.TextView; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); TextView t = new TextView(this); t.setText("Rabie APK Working! ✅"); setContentView(t); } }' > app/src/main/java/com/rabie/finalapp/MainActivity.java
           
-          # 5. البناء
+          # 6. أمر البناء النهائي
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Download_Link
+      - name: Upload_My_APK
         uses: actions/upload-artifact@v4
         with:
-          name: Rabie_New_APK
+          name: Rabie_Final_APK
           path: app/build/outputs/apk/debug/*.apk
