@@ -1,0 +1,48 @@
+name: Rabie_Final_Chance
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { java-version: '17', distribution: 'temurin' }
+
+      - name: Build_Totally_New
+        run: |
+          # صنع مجلد باسم جديد تماماً لكسر النحس
+          mkdir -p rtv_app/src/main/java/com/rtv/finalapp
+          
+          # ملف settings نقي
+          echo "rootProject.name = 'RTV_Project'; include ':rtv_app'" > settings.gradle
+          
+          # ملف build بمبدأ "البساطة"
+          cat <<EOF > rtv_app/build.gradle
+          plugins { id 'com.android.application' version '8.2.2' }
+          android {
+              namespace 'com.rtv.finalapp'
+              compileSdk 34
+              defaultConfig {
+                  applicationId "com.rtv.finalapp"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0"
+              }
+          }
+          dependencies { implementation 'androidx.appcompat:appcompat:1.6.1' }
+          EOF
+
+          # كود الجافا
+          echo 'package com.rtv.finalapp; import android.app.Activity; import android.os.Bundle; import android.widget.TextView; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); TextView t = new TextView(this); t.setText("Final Success ✅"); setContentView(t); } }' > rtv_app/src/main/java/com/rtv/finalapp/MainActivity.java
+          
+          # المانيفست
+          echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="RTV Final"><activity android:name="com.rtv.finalapp.MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > rtv_app/src/main/AndroidManifest.xml
+          
+          # البناء القسري
+          gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
+          ./gradlew :rtv_app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with: { name: 'RTV_RESULT', path: 'rtv_app/build/outputs/apk/debug/*.apk' }
