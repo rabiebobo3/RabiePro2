@@ -1,4 +1,4 @@
-name: Rabie_Ultimate_Success
+name: Rabie_Final_Success
 on: [push]
 jobs:
   build:
@@ -8,16 +8,26 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Pure_Android
+      - name: Build_Everything
         run: |
-          # تنظيف شامل
+          # 1. تنظيف عميق
           rm -rf app settings.gradle build.gradle
           mkdir -p app/src/main/java/com/rabie/finalapp
           
-          # ملف الإعدادات الأساسي
-          echo "rootProject.name = 'RabieFinal'; include ':app'" > settings.gradle
-          
-          # ملف بناء التطبيق (بدون مكتبات Material المعقدة)
+          # 2. ملف الإعدادات (تعريف المسارات - هاد السطر هو اللي كان ناقص)
+          cat <<EOF > settings.gradle
+          pluginManagement {
+              repositories { google(); mavenCentral(); gradlePluginPortal() }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = 'RabieFinal'
+          include ':app'
+          EOF
+
+          # 3. ملف بناء التطبيق
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android {
@@ -36,13 +46,11 @@ jobs:
           }
           EOF
 
-          # المانيفست (نسخة خفيفة)
+          # 4. المانيفست وكود الجافا
           echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Rabie App"><activity android:name="com.rabie.finalapp.MainActivity" android:theme="@style/Theme.AppCompat.Light" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
+          echo 'package com.rabie.finalapp; import android.app.Activity; import android.os.Bundle; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); android.widget.TextView t = new android.widget.TextView(this); t.setText("Final Success ✅"); setContentView(t); } }' > app/src/main/java/com/rabie/finalapp/MainActivity.java
           
-          # كود الجافا
-          echo 'package com.rabie.finalapp; import android.app.Activity; import android.os.Bundle; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); android.widget.TextView t = new android.widget.TextView(this); t.setText("Rabie Success ✅"); setContentView(t); } }' > app/src/main/java/com/rabie/finalapp/MainActivity.java
-          
-          # البناء القسري
+          # 5. البناء المباشر
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
@@ -50,5 +58,5 @@ jobs:
       - name: Export_APK
         uses: actions/upload-artifact@v4
         with:
-          name: Rabie_Success_APK
+          name: Rabie_Final_APK
           path: app/build/outputs/apk/debug/*.apk
