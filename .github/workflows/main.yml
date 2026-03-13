@@ -1,4 +1,4 @@
-name: Rabie_Unified_Build
+name: Rabie_Final_Fix
 on: [push]
 jobs:
   build:
@@ -10,14 +10,13 @@ jobs:
 
       - name: Create_And_Build_APK
         run: |
-          # 1. صنع المجلدات الأساسية
+          # 1. تنظيف وصنع المجلدات
+          rm -rf app settings.gradle build.gradle
           mkdir -p app/src/main/java/com/rabie/finalapp
           
-          # 2. ملف الإعدادات مع تعريف المكتبات (هذا هو الصح)
+          # 2. ملف الإعدادات
           cat <<EOF > settings.gradle
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories { google(); mavenCentral() }
@@ -26,12 +25,9 @@ jobs:
           include ':app'
           EOF
 
-          # 3. ملف بناء المشروع (Root Build File)
-          echo "buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:8.2.2' } }" > build.gradle
-
-          # 4. ملف بناء التطبيق (App Build File)
+          # 3. ملف بناء التطبيق (App Build) - معدل بدون أخطاء
           cat <<EOF > app/build.gradle
-          plugins { id 'com.android.application' }
+          plugins { id 'com.android.application' version '8.2.2' }
           android {
               namespace 'com.rabie.finalapp'
               compileSdk 34
@@ -49,16 +45,16 @@ jobs:
           }
           EOF
 
-          # 5. المانيفست وكود الجافا
+          # 4. المانيفست وكود الجافا
           echo '<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Rabie App"><activity android:name="com.rabie.finalapp.MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
-          echo 'package com.rabie.finalapp; import android.app.Activity; import android.os.Bundle; import android.widget.TextView; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); TextView t = new TextView(this); t.setText("Rabie APK Working! ✅"); setContentView(t); } }' > app/src/main/java/com/rabie/finalapp/MainActivity.java
+          echo 'package com.rabie.finalapp; import android.app.Activity; import android.os.Bundle; public class MainActivity extends Activity { @Override protected void onCreate(Bundle s) { super.onCreate(s); android.widget.TextView t = new android.widget.TextView(this); t.setText("Rabie APK Final Success!"); setContentView(t); } }' > app/src/main/java/com/rabie/finalapp/MainActivity.java
           
-          # 6. أمر البناء النهائي
+          # 5. أمر البناء
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload_My_APK
+      - name: Download_APK
         uses: actions/upload-artifact@v4
         with:
           name: Rabie_Final_APK
