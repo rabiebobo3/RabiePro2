@@ -1,4 +1,4 @@
-name: Build_Rabie_Pro_ORA_Final_V3
+name: Rabie_ORA_Pure_Build
 
 on:
   push:
@@ -17,18 +17,17 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
+          # نحينا الـ Cache باش ما يغلطش الـ GitHub مرة ثانية
 
-      # بناء هيكل المجلدات
-      - name: Create Project Folders
+      - name: Create Clean Structure
         run: |
+          rm -rf * # مسح كل الملفات القديمة لبداية نظيفة
           mkdir -p app/src/main/java/com/rabie/ora/
           mkdir -p app/src/main/res/layout/
           mkdir -p app/src/main/res/values/
           mkdir -p app/src/main/res/drawable/
 
-      # ملفات الإعدادات (بدون تعقيد)
-      - name: Create Gradle Files
+      - name: Create Gradle Core
         run: |
           echo "include ':app'" > settings.gradle
           cat <<EOF > build.gradle
@@ -41,8 +40,7 @@ jobs:
           }
           EOF
 
-      # ملف التطبيق مع الألوان البنفسجية (ORA)
-      - name: Create App Config
+      - name: Create ORA Style App
         run: |
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' }
@@ -65,8 +63,7 @@ jobs:
           }
           EOF
 
-      # كود الواجهة (الأسود والبنفسجي)
-      - name: Create UI and Layout
+      - name: Create UI (Purple Style)
         run: |
           cat <<EOF > app/src/main/res/drawable/ora_gradient.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
@@ -91,28 +88,6 @@ jobs:
           </RelativeLayout>
           EOF
 
-      # كود الجافا (MainActivity)
-      - name: Create Java Code
-        run: |
-          cat <<EOF > app/src/main/java/com/rabie/ora/MainActivity.java
-          package com.rabie.ora;
-          import android.os.Bundle;
-          import androidx.appcompat.app.AppCompatActivity;
-          import com.google.android.exoplayer2.ExoPlayer;
-          import com.google.android.exoplayer2.ui.StyledPlayerView;
-
-          public class MainActivity extends AppCompatActivity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  setContentView(R.layout.activity_main);
-                  ExoPlayer player = new ExoPlayer.Builder(this).build();
-                  ((StyledPlayerView) findViewById(R.id.player_view)).setPlayer(player);
-              }
-          }
-          EOF
-
-      # المانيفست
       - name: Create Manifest
         run: |
           cat <<EOF > app/src/main/AndroidManifest.xml
@@ -129,16 +104,29 @@ jobs:
           </manifest>
           EOF
 
-      # عملية البناء النهائية (بدون أخطاء إن شاء الله)
-      - name: Build APK Now
+      - name: Create Java Code
+        run: |
+          cat <<EOF > app/src/main/java/com/rabie/ora/MainActivity.java
+          package com.rabie.ora;
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+              }
+          }
+          EOF
+
+      - name: Final Build
         run: |
           gradle wrapper --gradle-version 8.1.1
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # رفع الـ APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Rabie_ORA_Pro_V3
+          name: Rabie_ORA_Final_APK
           path: app/build/outputs/apk/debug/*.apk
