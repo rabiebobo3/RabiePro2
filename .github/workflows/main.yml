@@ -1,4 +1,4 @@
-name: Rabie_ORA_No_Excuses_Build
+name: Rabie_ORA_Ultimate_StandAlone
 
 on:
   push:
@@ -18,27 +18,30 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # بناء المصنع من الصفر (كل الملفات نكرييوها هنا)
-      - name: Generate Project Files
+      # بناء المشروع بالكامل داخل الـ YAML (بدون الاعتماد على ملفات خارجية)
+      - name: Create Full Project Structure
         run: |
           rm -rf *
-          mkdir -p app/src/main/java/com/rabie/ora/ app/src/main/res/layout/ app/src/main/res/drawable/ app/src/main/res/values/
-          
-          # 1. ملف settings.gradle
+          mkdir -p app/src/main/java/com/rabie/ora/
+          mkdir -p app/src/main/res/layout/
+          mkdir -p app/src/main/res/drawable/
+          mkdir -p app/src/main/res/values/
+
+      - name: Create Gradle Settings
+        run: |
           echo "include ':app'" > settings.gradle
-          
-          # 2. ملف build.gradle (الأساسي)
           cat <<EOF > build.gradle
           buildscript {
               repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
+              dependencies { classpath 'com.android.tools.build:gradle:8.0.2' }
           }
           allprojects {
               repositories { google(); mavenCentral() }
           }
           EOF
 
-          # 3. ملف build.gradle (App) - مع ستايل ORA
+      - name: Create App Module (Full Dependencies)
+        run: |
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' }
           android {
@@ -51,28 +54,34 @@ jobs:
                   versionCode 1
                   versionName "1.0-ORA"
               }
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+              }
           }
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'com.google.android.material:material:1.9.0'
               implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
-              implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
           }
           EOF
 
-          # 4. الألوان (الخلفية البنفسجية المتدرجة)
-          cat <<EOF > app/src/main/res/drawable/ora_gradient.xml
+      - name: Create ORA Visuals (XML)
+        run: |
+          # تصميم التدرج البنفسجي
+          cat <<EOF > app/src/main/res/drawable/ora_bg.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
               <gradient android:startColor="#1A0033" android:endColor="#000000" android:angle="270" />
           </shape>
           EOF
-
-          # 5. الواجهة (Layout)
+          
+          # واجهة ORA Style كاملة
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:background="@drawable/ora_gradient">
+              android:background="@drawable/ora_bg">
               <com.google.android.exoplayer2.ui.StyledPlayerView
                   android:id="@+id/player_view"
                   android:layout_width="match_parent"
@@ -83,12 +92,13 @@ jobs:
                   android:text="RABIE ORA PRO"
                   android:textColor="#A020F0"
                   android:layout_centerInParent="true"
-                  android:textSize="24sp"
+                  android:textSize="32sp"
                   android:textStyle="bold" />
           </RelativeLayout>
           EOF
 
-          # 6. كود الجافا (MainActivity)
+      - name: Create Java and Manifest
+        run: |
           cat <<EOF > app/src/main/java/com/rabie/ora/MainActivity.java
           package com.rabie.ora;
           import android.os.Bundle;
@@ -101,12 +111,10 @@ jobs:
               }
           }
           EOF
-
-          # 7. المانيفست (Manifest)
           cat <<EOF > app/src/main/AndroidManifest.xml
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET" />
-              <application android:label="Rabie ORA" android:theme="@style/Theme.AppCompat.NoActionBar">
+              <application android:label="Rabie ORA Pro" android:theme="@style/Theme.AppCompat.NoActionBar">
                   <activity android:name="com.rabie.ora.MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
@@ -117,15 +125,15 @@ jobs:
           </manifest>
           EOF
 
-      # تشغيل القاردل (Gradle Wrapper) يدوياً لقطع كل الحجج
-      - name: Force Build
+      - name: The "Final Force" Build
         run: |
-          gradle wrapper --gradle-version 8.1.1
+          # هنا السر: نستخدم نسخة قاردل مستقرة ونمنع السيرفر من تحديثها
+          gradle wrapper --gradle-version 8.0.2
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Upload APK
+      - name: Upload Final APK
         uses: actions/upload-artifact@v4
         with:
-          name: ORA_Style_Result
+          name: Rabie_ORA_Ultimate_APK
           path: app/build/outputs/apk/debug/*.apk
