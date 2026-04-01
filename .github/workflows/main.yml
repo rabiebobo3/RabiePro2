@@ -1,4 +1,4 @@
-name: Build_Rabie_Pro_Fixed
+name: Build_Rabie_Pro_ORA_Final_V3
 
 on:
   push:
@@ -17,19 +17,20 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Create Structure
+      # بناء هيكل المجلدات
+      - name: Create Project Folders
         run: |
           mkdir -p app/src/main/java/com/rabie/ora/
           mkdir -p app/src/main/res/layout/
           mkdir -p app/src/main/res/values/
           mkdir -p app/src/main/res/drawable/
 
-      - name: Create settings.gradle
-        run: echo "include ':app'" > settings.gradle
-
-      - name: Create build.gradle (Project)
+      # ملفات الإعدادات (بدون تعقيد)
+      - name: Create Gradle Files
         run: |
+          echo "include ':app'" > settings.gradle
           cat <<EOF > build.gradle
           buildscript {
               repositories { google(); mavenCentral() }
@@ -40,7 +41,8 @@ jobs:
           }
           EOF
 
-      - name: Create build.gradle (App)
+      # ملف التطبيق مع الألوان البنفسجية (ORA)
+      - name: Create App Config
         run: |
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' }
@@ -63,15 +65,80 @@ jobs:
           }
           EOF
 
-      - name: Create Layout and Code
+      # كود الواجهة (الأسود والبنفسجي)
+      - name: Create UI and Layout
         run: |
-          # سأختصر هنا لضمان السرعة، المهم هو الملف المصحح
-          echo "..." # (ضع نفس أكواد الـ XML والجافا السابقة هنا)
+          cat <<EOF > app/src/main/res/drawable/ora_gradient.xml
+          <shape xmlns:android="http://schemas.android.com/apk/res/android">
+              <gradient android:startColor="#1A0033" android:endColor="#000000" android:angle="270" />
+          </shape>
+          EOF
+          cat <<EOF > app/src/main/res/layout/activity_main.xml
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/ora_gradient">
+              <com.google.android.exoplayer2.ui.StyledPlayerView
+                  android:id="@+id/player_view"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent" />
+              <ProgressBar
+                  android:id="@+id/loader"
+                  android:layout_width="64dp"
+                  android:layout_height="64dp"
+                  android:layout_centerInParent="true"
+                  android:indeterminateTint="#A020F0" />
+          </RelativeLayout>
+          EOF
 
-      - name: Final Build Fixed
+      # كود الجافا (MainActivity)
+      - name: Create Java Code
         run: |
-          # هذه هي الخطوة التي ستصلح الخطأ في الصورة
-          yes | sdkmanager --licenses
+          cat <<EOF > app/src/main/java/com/rabie/ora/MainActivity.java
+          package com.rabie.ora;
+          import android.os.Bundle;
+          import androidx.appcompat.app.AppCompatActivity;
+          import com.google.android.exoplayer2.ExoPlayer;
+          import com.google.android.exoplayer2.ui.StyledPlayerView;
+
+          public class MainActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+                  ExoPlayer player = new ExoPlayer.Builder(this).build();
+                  ((StyledPlayerView) findViewById(R.id.player_view)).setPlayer(player);
+              }
+          }
+          EOF
+
+      # المانيفست
+      - name: Create Manifest
+        run: |
+          cat <<EOF > app/src/main/AndroidManifest.xml
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET" />
+              <application android:label="Rabie ORA Pro" android:theme="@style/Theme.AppCompat.NoActionBar">
+                  <activity android:name="com.rabie.ora.MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+      # عملية البناء النهائية (بدون أخطاء إن شاء الله)
+      - name: Build APK Now
+        run: |
           gradle wrapper --gradle-version 8.1.1
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
+
+      # رفع الـ APK
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rabie_ORA_Pro_V3
+          path: app/build/outputs/apk/debug/*.apk
