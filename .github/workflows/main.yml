@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Fixed
+name: Rabie_Pro_V42_Final_Auto_Reload
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Stable_Optimized
+      - name: Build_Optimized_Clean
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -27,7 +27,6 @@ jobs:
           
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          # --- قواعد حماية شاملة لمنع الـ Crash عند الفتح ---
           cat <<EOF > app/proguard-rules.pro
           -keep class com.rabie.iptv.** { *; }
           -keep class androidx.media3.** { *; }
@@ -35,12 +34,8 @@ jobs:
           -keep class com.google.gson.** { *; }
           -keep class com.bumptech.glide.** { *; }
           -keep class com.android.volley.** { *; }
-          
-          # حماية واجهات أندرويد الأساسية
           -keep public class * extends android.app.Activity
-          -keep public class * extends android.app.Application
-          -keep public class * extends android.app.Service
-          
+          -keepattributes Signature, *Annotation*
           -dontwarn androidx.media3.**
           -dontwarn com.google.android.gms.cast.**
           EOF
@@ -65,34 +60,21 @@ jobs:
                       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
                   debug {
-                      # في نسخة الديباق نوقف التقليص مؤقتاً للتأكد من عمل التطبيق
-                      minifyEnabled false
-                      shrinkResources false
+                      minifyEnabled true
+                      shrinkResources true
+                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
-          dependencies { 
-              implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'androidx.media3:media3-exoplayer:1.2.1'
-              implementation 'androidx.media3:media3-ui:1.2.1'
-              implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
-              implementation 'androidx.recyclerview:recyclerview:1.3.0'
-              implementation 'androidx.cardview:cardview:1.0.0'
-              implementation 'com.android.volley:volley:1.2.1'
-              implementation 'com.google.code.gson:gson:2.10.1'
-              implementation 'com.github.bumptech.glide:glide:4.16.0'
-              implementation 'androidx.mediarouter:mediarouter:1.7.0'
-              implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-          }
           EOF
 
-          # [تأكد من وضع كود MainActivity.java و الـ Layouts هنا كما في المرات السابقة]
+          # [هنا تضع كود الـ Manifest و MainActivity وبقية الملفات كما هي عندك]
 
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_Final_Apk
+      - name: Upload_V42_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Fixed, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Final, path: app/build/outputs/apk/debug/*.apk }
