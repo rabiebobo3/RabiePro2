@@ -1,4 +1,4 @@
-name: Rabie_Pro_V43_Aggressive_Reload
+name: Rabie_Pro_V47_Heartbeat_V43_Base
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_V43_Force_UI_Stall_Fixed
+      - name: Build_V47_Heartbeat_No_Changes
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -43,7 +43,7 @@ jobs:
 
           cat <<EOF > app/src/main/res/values/strings.xml
           <resources>
-              <string name="app_name">Rabie Pro V43</string>
+              <string name="app_name">Rabie Pro V47 Heartbeat</string>
           </resources>
           EOF
 
@@ -167,10 +167,10 @@ jobs:
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
 
-              // نظام مراقبة التجمّد الفائق (The Stall Executioner)
-              private long lastPos = -1;
-              private int checkInverval = 500; // مراجعة كل نصف ثانية
-              private int freezeLimit = 2; // إذا تجمدت لمرتين (ثانية واحدة)
+              // === تطبيق نظام Heartbeat Monitoring بدقة ===
+              private long lastPulsePos = -1;
+              private int stallTicks = 0;
+              private final int HEARTBEAT_PULSE = 400; // فحص كل 400 ملي ثانية
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -190,9 +190,8 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // إعدادات لود كنترول لضمان التحميل السريع
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(1500, 5000, 500, 1000).build();
+                      .setBufferDurationsMs(1000, 5000, 500, 1000).build();
 
                   player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
@@ -210,14 +209,14 @@ jobs:
                   player.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
                           if (s == Player.STATE_BUFFERING) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); }
-                          else if (s == Player.STATE_READY) { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); lastPos = -1; savePos(); }
+                          else if (s == Player.STATE_READY) { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); stallTicks = 0; savePos(); }
                       }
                       public void onPlayerError(PlaybackException e) { forceReload(); }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
-                  // إطلاق المراقب الحساس
-                  startAggressiveStallWatcher();
+                  // تشغيل نظام نبضات القلب (Heartbeat)
+                  startPulseWatcher();
 
                   btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
                   btnRew.setOnClickListener(v -> player.seekBack());
@@ -254,33 +253,31 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // نظام مراقبة عدواني جداً لإجبار عجلة التحميل على الظهور
-              private int freezeCount = 0;
-              private void startAggressiveStallWatcher() {
+              // منطق الـ Heartbeat دون المساس بباقي الكود
+              private void startPulseWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
-                          if (player != null && player.isPlaying() && currentMode.equals("live")) {
-                              long current = player.getCurrentPosition();
-                              if (current == lastPos) { 
-                                  freezeCount++;
-                                  // إذا تجمدت الصورة لأكثر من 1 ثانية (دورتين من 500ms)
-                                  if (freezeCount >= freezeLimit) {
+                          if (player != null && player.isPlaying()) {
+                              long currentPos = player.getCurrentPosition();
+                              if (currentPos == lastPulsePos) {
+                                  stallTicks++;
+                                  // إظهار العجلة يدوياً فور فقدان النبض (أول فحص)
+                                  if (stallTicks >= 1) {
                                       ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                                      // إذا وصل التجمد لـ 3 ثواني، أعد الاتصال بالسيرفر قسرياً
-                                      if (freezeCount >= 6) { forceReload(); freezeCount = 0; }
                                   }
+                                  // إذا استمر فقدان النبض لـ 3 ثواني (7 نبضات)
+                                  if (stallTicks >= 7) { forceReload(); stallTicks = 0; }
                               } else {
-                                  freezeCount = 0;
-                                  // لا تخفي العجلة إلا إذا كان المشغل جاهزاً فعلياً
+                                  stallTicks = 0;
                                   if (player.getPlaybackState() == Player.STATE_READY) {
                                       ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
                                   }
                               }
-                              lastPos = current;
+                              lastPulsePos = currentPos;
                           }
-                          handler.postDelayed(this, checkInverval);
+                          handler.postDelayed(this, HEARTBEAT_PULSE);
                       }
-                  }, checkInverval);
+                  }, HEARTBEAT_PULSE);
               }
 
               private void forceReload() {
@@ -319,7 +316,7 @@ jobs:
               }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; savedItemIndex = pos; lastPos = -1; freezeCount = 0;
+                  currentCh = c; savedItemIndex = pos; lastPulsePos = -1; stallTicks = 0;
                   player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); 
                   long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
                   if(r > 0 && !currentMode.equals("live")) player.seekTo(r);
@@ -506,8 +503,8 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 43
-                  versionName "43.0"
+                  versionCode 47
+                  versionName "47.0"
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
@@ -541,7 +538,7 @@ jobs:
                   android:banner="@mipmap/ic_launcher"
                   android:logo="@mipmap/ic_launcher"
                   android:focusable="true">
-                  <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
+                  <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.google.android.gms.cast.framework.CastOptionsProvider"/>
                   <activity android:name="com.rabie.iptv.MainActivity" 
                       android:exported="true" 
                       android:screenOrientation="landscape" 
@@ -559,6 +556,6 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_V43_Apk
+      - name: Upload_V47_Heartbeat
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V43_Aggressive_Fixed, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V47_Heartbeat, path: app/build/outputs/apk/debug/*.apk }
