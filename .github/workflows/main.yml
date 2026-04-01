@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Ultimate_Fixed
+name: Rabie_Pro_V42_Final_Auto_Reload
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Final_No_Freeze
+      - name: Build_Final_Professional_Stall_Fixed
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -25,7 +25,6 @@ jobs:
 
           mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
           
-          # تحميل الأيقونات واللوقو
           curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
@@ -44,13 +43,12 @@ jobs:
 
           cat <<EOF > app/src/main/res/values/strings.xml
           <resources>
-              <string name="app_name">Rabie Pro</string>
+              <string name="app_name">Rabie Pro V42</string>
           </resources>
           EOF
 
           echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
 
-          # الملفات التخطيطية (Layouts) كما هي بدون حذف أي عنصر
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -126,7 +124,6 @@ jobs:
           </RelativeLayout>
           EOF
 
-          # ملف MainActivity.java مع نظام مراقبة التجمّد (The Stall Watcher)
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Intent;
@@ -170,7 +167,7 @@ jobs:
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
 
-              // متغيرات مراقبة التجمد (Heartbeat System)
+              // مراقبة النبض الفائقة
               private long lastPosition = -1;
               private int stallCount = 0;
 
@@ -192,9 +189,8 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // ضبط البفار بشكل عدواني للجلب السريع
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(2500, 5000, 1000, 1500).build();
+                      .setBufferDurationsMs(2500, 8000, 1000, 1500).build();
 
                   player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
@@ -219,7 +215,6 @@ jobs:
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
-                  // --- [ تشغيل نظام مراقبة النبض لمنع التجمد الصامت ] ---
                   startStallWatcher();
 
                   btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
@@ -257,17 +252,20 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // نظام مراقبة النبض: إذا توقفت الصورة (عداد الثواني) لثانية واحدة، تظهر العجلة فوراً
+              // نظام التحميل الأوتوماتيكي عند التجمّد
               private void startStallWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
                           if (player != null && player.isPlaying() && currentMode.equals("live")) {
                               long currentPos = player.getCurrentPosition();
-                              if (currentPos == lastPosition) { // الصورة متوقفة تقنياً
+                              if (currentPos == lastPosition) { 
                                   stallCount++;
-                                  if (stallCount >= 2) { // توقف لمدة ثانية واحدة (500ms * 2)
+                                  if (stallCount >= 2) { 
                                       ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                                      if (stallCount >= 6) forceReload(); // إذا طال التجمد لـ 3 ثواني، أعد الاتصال بالسيرفر
+                                      if (stallCount >= 4) { // إذا توقف لـ 2 ثانية، أعد التحميل فوراً
+                                          forceReload();
+                                          stallCount = 0;
+                                      }
                                   }
                               } else {
                                   stallCount = 0;
@@ -285,6 +283,11 @@ jobs:
                   player.prepare();
                   player.play();
               }
+
+              // منع العمل في الخلفية نهائياً
+              @Override protected void onPause() { super.onPause(); if(player != null) player.stop(); }
+              @Override protected void onStop() { super.onStop(); if(player != null) player.stop(); }
+              @Override protected void onDestroy() { super.onDestroy(); if(player != null) player.release(); handler.removeCallbacksAndMessages(null); }
 
               private void showOverlay() {
                   overlay.setVisibility(View.VISIBLE);
@@ -441,7 +444,6 @@ jobs:
           }
           EOF
 
-          # باقي الملفات (Drawables / Gradle)
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
@@ -500,8 +502,8 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 41
-                  versionName "41.0"
+                  versionCode 42
+                  versionName "42.0"
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
@@ -553,6 +555,6 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_V41_Apk
+      - name: Upload_V42_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Heartbeat_Fixed, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Final_Auto_Reload, path: app/build/outputs/apk/debug/*.apk }
