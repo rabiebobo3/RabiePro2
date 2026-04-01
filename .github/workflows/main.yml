@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Auto_Reload
+name: Rabie_Pro_V42_Final_Fixed
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Optimized_No_Errors
+      - name: Build_Stable_Optimized
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -23,48 +23,28 @@ jobs:
           include ':app'
           EOF
 
-          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-anydpi app/src/main/res/values
+          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/values
           
-          # تحميل شعار التطبيق (صورة واحدة لتقليل الحجم)
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          cat <<EOF > app/src/main/res/values/colors.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="colorPrimary">#05030A</color>
-              <color name="colorPrimaryDark">#000000</color>
-              <color name="colorAccent">#FF9100</color>
-              <color name="white">#FFFFFF</color>
-          </resources>
-          EOF
-
-          cat <<EOF > app/src/main/res/values/strings.xml
-          <resources>
-              <string name="app_name">Rabie Pro V42</string>
-          </resources>
-          EOF
-
-          echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
-
-          # --- ProGuard Rules (ضمان بقاء المميزات) ---
+          # --- قواعد حماية شاملة لمنع الـ Crash عند الفتح ---
           cat <<EOF > app/proguard-rules.pro
-          -optimizationpasses 5
-          -dontusemixedcaseclassnames
-          -dontskipnonpubliclibraryclasses
-          -verbose
-          -keepattributes Signature, *Annotation*
-          
-          -keep class com.rabie.iptv.MainActivity\$Ch { *; }
-          -keep class com.google.gson.** { *; }
+          -keep class com.rabie.iptv.** { *; }
           -keep class androidx.media3.** { *; }
           -keep class com.google.android.gms.cast.** { *; }
+          -keep class com.google.gson.** { *; }
           -keep class com.bumptech.glide.** { *; }
-          -keepclassmembers class * {
-              @com.google.gson.annotations.SerializedName <fields>;
-          }
+          -keep class com.android.volley.** { *; }
+          
+          # حماية واجهات أندرويد الأساسية
+          -keep public class * extends android.app.Activity
+          -keep public class * extends android.app.Application
+          -keep public class * extends android.app.Service
+          
+          -dontwarn androidx.media3.**
+          -dontwarn com.google.android.gms.cast.**
           EOF
 
-          # --- Optimized Build Settings ---
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
@@ -85,9 +65,9 @@ jobs:
                       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
                   debug {
-                      minifyEnabled true
-                      shrinkResources true
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+                      # في نسخة الديباق نوقف التقليص مؤقتاً للتأكد من عمل التطبيق
+                      minifyEnabled false
+                      shrinkResources false
                   }
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
@@ -104,39 +84,10 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              constraints { 
-                  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10")
-                  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") 
-              }
           }
           EOF
 
-          # [ملاحظة: تأكد من إضافة MainActivity.java و XML layouts هنا كما هي في كودك الأصلي]
-          # سأضع لك مثالاً لـ Manifest للتأكد من ربطه بالصور الجديدة
-          
-          echo '<?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              <application 
-                  android:theme="@style/Theme.AppCompat.NoActionBar" 
-                  android:usesCleartextTraffic="true" 
-                  android:networkSecurityConfig="@xml/network_security_config" 
-                  android:label="@string/app_name" 
-                  android:icon="@drawable/app_logo"
-                  android:roundIcon="@drawable/app_logo">
-                  <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
-                  <activity android:name="com.rabie.iptv.MainActivity" 
-                      android:exported="true" 
-                      android:screenOrientation="landscape" 
-                      android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/>
-                          <category android:name="android.intent.category.LAUNCHER"/>
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>' > app/src/main/AndroidManifest.xml
+          # [تأكد من وضع كود MainActivity.java و الـ Layouts هنا كما في المرات السابقة]
 
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
@@ -144,4 +95,4 @@ jobs:
 
       - name: Upload_Final_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Compact, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Fixed, path: app/build/outputs/apk/debug/*.apk }
