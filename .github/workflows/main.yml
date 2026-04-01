@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Icon_Logo_New
+name: Rabie_Pro_V41_Ultimate_Fixed
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_V41_Ultimate_With_Icon
+      - name: Build_Final_No_Freeze
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -25,6 +25,7 @@ jobs:
 
           mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
           
+          # تحميل الأيقونات واللوقو
           curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
@@ -49,6 +50,7 @@ jobs:
 
           echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
 
+          # الملفات التخطيطية (Layouts) كما هي بدون حذف أي عنصر
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -124,6 +126,7 @@ jobs:
           </RelativeLayout>
           EOF
 
+          # ملف MainActivity.java مع نظام مراقبة التجمّد (The Stall Watcher)
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Intent;
@@ -166,7 +169,10 @@ jobs:
               private Handler handler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
-              private boolean isRetrying = false;
+
+              // متغيرات مراقبة التجمد (Heartbeat System)
+              private long lastPosition = -1;
+              private int stallCount = 0;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -186,19 +192,11 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // --- [ تعديل الأمانة البرمجية: أقوى دالة لمنع تجمد الصورة + تحسين الاسترجاع ] ---
+                  // ضبط البفار بشكل عدواني للجلب السريع
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(30000, 60000, 1000, 2000)
-                      .setBackBuffer(20000, true)
-                      .setPrioritizeTimeOverSizeThresholds(true)
-                      .build();
+                      .setBufferDurationsMs(2500, 5000, 1000, 1500).build();
 
-                  player = new ExoPlayer.Builder(this)
-                      .setLoadControl(loadControl)
-                      .setSeekBackIncrementMs(10000)
-                      .setSeekForwardIncrementMs(10000)
-                      .build();
-                  // ---------------------------------------------------------------------------
+                  player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
                   smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
@@ -215,24 +213,14 @@ jobs:
                       public void onPlaybackStateChanged(int s) {
                           int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
                           ps.setVisibility(v); pf.setVisibility(v);
-                          
-                          if (s == Player.STATE_READY) {
-                              isRetrying = false;
-                              if (currentCh != null) savePos();
-                          }
-                          
-                          // تحسين دالة تجمد الصورة: إعادة المحاولة فوراً عند حدوث خطأ أو توقف غير متوقع
-                          if (s == Player.STATE_IDLE && currentCh != null && !isRetrying) {
-                              retryPlayback();
-                          }
+                          if(s == Player.STATE_READY) { lastPosition = -1; stallCount = 0; savePos(); }
                       }
-                      public void onPlayerError(PlaybackException error) {
-                          // إظهار عجلة التحميل فوراً عند الخطأ ومحاولة جلب البيانات
-                          ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                          retryPlayback();
-                      }
+                      public void onPlayerError(PlaybackException e) { forceReload(); }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
+
+                  // --- [ تشغيل نظام مراقبة النبض لمنع التجمد الصامت ] ---
+                  startStallWatcher();
 
                   btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
                   btnRew.setOnClickListener(v -> player.seekBack());
@@ -269,33 +257,33 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              private void retryPlayback() {
-                  if (currentCh == null) return;
-                  isRetrying = true;
-                  handler.postDelayed(() -> {
-                      player.prepare();
-                      player.play();
-                  }, 1500); // محاولة الجلب كل ثانية ونصف عند التجمد
+              // نظام مراقبة النبض: إذا توقفت الصورة (عداد الثواني) لثانية واحدة، تظهر العجلة فوراً
+              private void startStallWatcher() {
+                  handler.postDelayed(new Runnable() {
+                      @Override public void run() {
+                          if (player != null && player.isPlaying() && currentMode.equals("live")) {
+                              long currentPos = player.getCurrentPosition();
+                              if (currentPos == lastPosition) { // الصورة متوقفة تقنياً
+                                  stallCount++;
+                                  if (stallCount >= 2) { // توقف لمدة ثانية واحدة (500ms * 2)
+                                      ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                                      if (stallCount >= 6) forceReload(); // إذا طال التجمد لـ 3 ثواني، أعد الاتصال بالسيرفر
+                                  }
+                              } else {
+                                  stallCount = 0;
+                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
+                              }
+                              lastPosition = currentPos;
+                          }
+                          handler.postDelayed(this, 500);
+                      }
+                  }, 500);
               }
 
-              @Override
-              protected void onStop() { super.onStop(); if (player != null) player.pause(); }
-
-              @Override
-              protected void onDestroy() { super.onDestroy(); if (player != null) { player.release(); player = null; } }
-
-              @Override
-              public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (fullCont.getVisibility() == View.VISIBLE) {
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { player.seekBack(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { player.seekForward(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) { 
-                          if (overlay.getVisibility() == View.VISIBLE) overlay.setVisibility(View.GONE); else showOverlay();
-                          return true;
-                      }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_UP) { showOverlay(); return true; }
-                  }
-                  return super.onKeyDown(keyCode, event);
+              private void forceReload() {
+                  if (currentCh == null) return;
+                  player.prepare();
+                  player.play();
               }
 
               private void showOverlay() {
@@ -324,7 +312,7 @@ jobs:
               }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; savedItemIndex = pos; isRetrying = false;
+                  currentCh = c; savedItemIndex = pos; lastPosition = -1; stallCount = 0;
                   player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); 
                   long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
                   if(r > 0 && !currentMode.equals("live")) player.seekTo(r);
@@ -453,6 +441,7 @@ jobs:
           }
           EOF
 
+          # باقي الملفات (Drawables / Gradle)
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
@@ -566,4 +555,4 @@ jobs:
 
       - name: Upload_V41_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Final_Buffer_Fixed, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Heartbeat_Fixed, path: app/build/outputs/apk/debug/*.apk }
