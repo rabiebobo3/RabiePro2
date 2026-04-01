@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Auto_Reload
+name: Rabie_Pro_V43_Aggressive_Reload
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Final_Professional_Stall_Fixed
+      - name: Build_V43_Force_UI_Stall_Fixed
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -43,7 +43,7 @@ jobs:
 
           cat <<EOF > app/src/main/res/values/strings.xml
           <resources>
-              <string name="app_name">Rabie Pro V42</string>
+              <string name="app_name">Rabie Pro V43</string>
           </resources>
           EOF
 
@@ -119,7 +119,7 @@ jobs:
                           </RelativeLayout>
                       </LinearLayout>
                   </LinearLayout>
-                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100" android:elevation="30dp"/>
               </FrameLayout>
           </RelativeLayout>
           EOF
@@ -167,9 +167,10 @@ jobs:
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
 
-              // مراقبة النبض الفائقة
-              private long lastPosition = -1;
-              private int stallCount = 0;
+              // نظام مراقبة التجمّد الفائق (The Stall Executioner)
+              private long lastPos = -1;
+              private int checkInverval = 500; // مراجعة كل نصف ثانية
+              private int freezeLimit = 2; // إذا تجمدت لمرتين (ثانية واحدة)
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -189,8 +190,9 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
+                  // إعدادات لود كنترول لضمان التحميل السريع
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(2500, 8000, 1000, 1500).build();
+                      .setBufferDurationsMs(1500, 5000, 500, 1000).build();
 
                   player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
@@ -207,15 +209,15 @@ jobs:
 
                   player.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
-                          int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
-                          ps.setVisibility(v); pf.setVisibility(v);
-                          if(s == Player.STATE_READY) { lastPosition = -1; stallCount = 0; savePos(); }
+                          if (s == Player.STATE_BUFFERING) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); }
+                          else if (s == Player.STATE_READY) { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); lastPos = -1; savePos(); }
                       }
                       public void onPlayerError(PlaybackException e) { forceReload(); }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
-                  startStallWatcher();
+                  // إطلاق المراقب الحساس
+                  startAggressiveStallWatcher();
 
                   btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
                   btnRew.setOnClickListener(v -> player.seekBack());
@@ -252,30 +254,33 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // نظام التحميل الأوتوماتيكي عند التجمّد
-              private void startStallWatcher() {
+              // نظام مراقبة عدواني جداً لإجبار عجلة التحميل على الظهور
+              private int freezeCount = 0;
+              private void startAggressiveStallWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
                           if (player != null && player.isPlaying() && currentMode.equals("live")) {
-                              long currentPos = player.getCurrentPosition();
-                              if (currentPos == lastPosition) { 
-                                  stallCount++;
-                                  if (stallCount >= 2) { 
+                              long current = player.getCurrentPosition();
+                              if (current == lastPos) { 
+                                  freezeCount++;
+                                  // إذا تجمدت الصورة لأكثر من 1 ثانية (دورتين من 500ms)
+                                  if (freezeCount >= freezeLimit) {
                                       ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                                      if (stallCount >= 4) { // إذا توقف لـ 2 ثانية، أعد التحميل فوراً
-                                          forceReload();
-                                          stallCount = 0;
-                                      }
+                                      // إذا وصل التجمد لـ 3 ثواني، أعد الاتصال بالسيرفر قسرياً
+                                      if (freezeCount >= 6) { forceReload(); freezeCount = 0; }
                                   }
                               } else {
-                                  stallCount = 0;
-                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
+                                  freezeCount = 0;
+                                  // لا تخفي العجلة إلا إذا كان المشغل جاهزاً فعلياً
+                                  if (player.getPlaybackState() == Player.STATE_READY) {
+                                      ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
+                                  }
                               }
-                              lastPosition = currentPos;
+                              lastPos = current;
                           }
-                          handler.postDelayed(this, 500);
+                          handler.postDelayed(this, checkInverval);
                       }
-                  }, 500);
+                  }, checkInverval);
               }
 
               private void forceReload() {
@@ -284,7 +289,6 @@ jobs:
                   player.play();
               }
 
-              // منع العمل في الخلفية نهائياً
               @Override protected void onPause() { super.onPause(); if(player != null) player.stop(); }
               @Override protected void onStop() { super.onStop(); if(player != null) player.stop(); }
               @Override protected void onDestroy() { super.onDestroy(); if(player != null) player.release(); handler.removeCallbacksAndMessages(null); }
@@ -315,7 +319,7 @@ jobs:
               }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; savedItemIndex = pos; lastPosition = -1; stallCount = 0;
+                  currentCh = c; savedItemIndex = pos; lastPos = -1; freezeCount = 0;
                   player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); 
                   long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
                   if(r > 0 && !currentMode.equals("live")) player.seekTo(r);
@@ -502,8 +506,8 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 42
-                  versionName "42.0"
+                  versionCode 43
+                  versionName "43.0"
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
@@ -555,6 +559,6 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_V42_Apk
+      - name: Upload_V43_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Final_Auto_Reload, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V43_Aggressive_Fixed, path: app/build/outputs/apk/debug/*.apk }
