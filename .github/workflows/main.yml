@@ -311,11 +311,12 @@ jobs:
               private void playNext() { int i = currentItems.indexOf(currentCh); if(i != -1 && i < currentItems.size()-1) playChannel(currentItems.get(i+1), i+1, true); }
               private void playPrev() { int i = currentItems.indexOf(currentCh); if(i > 0) playChannel(currentItems.get(i-1), i-1, true); }
 
+              // --- [ استرجاع دالة التصنيف الأصلية لربيع ] ---
               private String getT(Ch c) { 
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
-                  if (g.contains("movie") || g.contains("أفلام")) return "movie";
-                  if (g.contains("series") || g.contains("مسلسل")) return "series";
+                  if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie";
+                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series";
                   return "live";
               }
 
@@ -540,4 +541,4 @@ jobs:
 
       - name: Upload_V41_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Final_Buffer, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Final_Buffer_Fixed, path: app/build/outputs/apk/debug/*.apk }
