@@ -1,185 +1,55 @@
-name: Rabie_ORA_Ultimate_Build
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
+name: Rabie_Ultimate_Fix
+on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {java-version: '11', distribution: 'temurin'} # استعملنا Java 11 لأنها الأضمن للبناء السريع
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      # 1. تنظيف وبناء الهيكل (بدون رحمة للمشاكل القديمة)
-      - name: Clean and Create Structure
+      - name: Build APK ORA Style
         run: |
+          # تنظيف شامل
           rm -rf *
-          mkdir -p app/src/main/java/com/rabie/ora/
-          mkdir -p app/src/main/res/layout/
-          mkdir -p app/src/main/res/values/
-          mkdir -p app/src/main/res/drawable/
-
-      # 2. ملفات الإعدادات (Gradle) لضمان التوافق 100%
-      - name: Configure Gradle
-        run: |
+          mkdir -p app/src/main/java/com/rabie/ora/ app/src/main/res/layout/ app/src/main/res/drawable/ app/src/main/res/values/
+          
+          # إعدادات Gradle يدوية 100%
           echo "include ':app'" > settings.gradle
-          cat <<EOF > build.gradle
-          buildscript {
-              repositories { google(); mavenCentral() }
-              dependencies { classpath 'com.android.tools.build:gradle:8.1.0' }
-          }
-          allprojects {
-              repositories { google(); mavenCentral() }
-          }
-          EOF
-
-      # 3. ملف التطبيق (App Build) مع كل المكتبات (ORA Style)
-      - name: App Dependencies
-        run: |
+          echo "buildscript { repositories { google(); mavenCentral() }; dependencies { classpath 'com.android.tools.build:gradle:7.4.2' } }" > build.gradle
+          echo "allprojects { repositories { google(); mavenCentral() } }" >> build.gradle
+          
+          # تطبيق الديزاين البنفسجي (ORA) في ملف واحد
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' }
-          android {
+          android { 
               namespace 'com.rabie.ora'
-              compileSdk 34
-              defaultConfig {
-                  applicationId "com.rabie.ora"
-                  minSdk 21
-                  targetSdk 34
-                  versionCode 42
-                  versionName "4.2-ULTIMATE"
-              }
-              buildTypes { release { minifyEnabled false } }
+              compileSdk 33
+              defaultConfig { applicationId "com.rabie.ora"; minSdk 21; targetSdk 33; versionCode 1; versionName "1.0" }
           }
-          dependencies {
+          dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
-              implementation 'com.google.android.material:material:1.11.0'
-              implementation 'androidx.cardview:cardview:1.0.0'
-              implementation 'com.google.android.exoplayer:exoplayer:2.19.1'
-              implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
+              implementation 'com.google.android.material:material:1.9.0'
           }
           EOF
 
-      # 4. الألوان والديزاين (السر نتاع ORA)
-      - name: Create ORA Visuals
-        run: |
-          # التدرج البنفسجي الأسطوري
-          cat <<EOF > app/src/main/res/drawable/ora_bg.xml
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <gradient android:startColor="#1A0033" android:endColor="#000000" android:angle="270" />
-          </shape>
-          EOF
-          # ستايل البطاقات (Cards)
-          cat <<EOF > app/src/main/res/drawable/card_style.xml
-          <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <solid android:color="#2B004D" />
-              <corners android:radius="18dp" />
-          </shape>
-          EOF
-
-      # 5. الواجهة (XML) - تصميم الشاشة الكاملة
-      - name: Create Layout
-        run: |
+          # تصميم الواجهة البنفسجية المظلمة
+          echo '<shape xmlns:android="http://schemas.android.com/apk/res/android"><gradient android:startColor="#1A0033" android:endColor="#000000" android:angle="270" /></shape>' > app/src/main/res/drawable/ora_bg.xml
+          
           cat <<EOF > app/src/main/res/layout/activity_main.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:background="@drawable/ora_bg">
-
-              <com.google.android.exoplayer2.ui.StyledPlayerView
-                  android:id="@+id/player_view"
-                  android:layout_width="match_parent"
-                  android:layout_height="match_parent"
-                  android:background="#000000" />
-
-              <ProgressBar
-                  android:id="@+id/loader"
-                  android:layout_width="70dp"
-                  android:layout_height="70dp"
-                  android:layout_centerInParent="true"
-                  android:indeterminateTint="#A020F0" />
-                  
-              <TextView
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:text="Rabie ORA Pro"
-                  android:textColor="#A020F0"
-                  android:layout_alignParentBottom="true"
-                  android:layout_centerHorizontal="true"
-                  android:layout_marginBottom="20dp"
-                  android:textStyle="bold" />
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/ora_bg">
+              <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rabie ORA Pro" android:textColor="#A020F0" android:layout_centerInParent="true" android:textSize="30sp" android:textStyle="bold" />
           </RelativeLayout>
           EOF
 
-      # 6. الكود البرمجي (Java) - المحرك القوي
-      - name: Create Java Code
-        run: |
-          cat <<EOF > app/src/main/java/com/rabie/ora/MainActivity.java
-          package com.rabie.ora;
-          import android.os.Bundle;
-          import android.view.View;
-          import androidx.appcompat.app.AppCompatActivity;
-          import com.google.android.exoplayer2.ExoPlayer;
-          import com.google.android.exoplayer2.MediaItem;
-          import com.google.android.exoplayer2.ui.StyledPlayerView;
+          # كود الجافا والمانيفست
+          echo 'package com.rabie.ora; import android.os.Bundle; import androidx.appcompat.app.AppCompatActivity; public class MainActivity extends AppCompatActivity { protected void onCreate(Bundle s) { super.onCreate(s); setContentView(R.layout.activity_main); } }' > app/src/main/java/com/rabie/ora/MainActivity.java
+          echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application android:label="Rabie ORA" android:theme="@style/Theme.AppCompat.NoActionBar"><activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity></application></manifest>' > app/src/main/AndroidManifest.xml
 
-          public class MainActivity extends AppCompatActivity {
-              private ExoPlayer player;
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  setContentView(R.layout.activity_main);
-                  
-                  player = new ExoPlayer.Builder(this).build();
-                  StyledPlayerView playerView = findViewById(R.id.player_view);
-                  playerView.setPlayer(player);
-                  
-                  // رابط تجريبي (يمكنك تغييره لاحقاً)
-                  MediaItem mediaItem = MediaItem.fromUri("https://test-url.m3u8");
-                  player.setMediaItem(mediaItem);
-                  player.prepare();
-                  player.play();
-              }
-              @Override
-              protected void onDestroy() { super.onDestroy(); player.release(); }
-          }
-          EOF
-
-      # 7. المانيفست (Manifest)
-      - name: Create Manifest
-        run: |
-          cat <<EOF > app/src/main/AndroidManifest.xml
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <application android:label="Rabie ORA Ultimate" android:theme="@style/Theme.AppCompat.NoActionBar">
-                  <activity android:name="com.rabie.ora.MainActivity" android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-      # 8. البناء النهائي (الضربة القاضية)
-      - name: Build APK Final
-        run: |
-          gradle wrapper --gradle-version 8.1.1
+          # تنفيذ البناء بنسخة مستقرة
+          gradle wrapper --gradle-version 7.5
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      # 9. رفع الـ APK
-      - name: Upload Result
-        uses: actions/upload-artifact@v4
-        with:
-          name: Rabie_ORA_Ultimate_APK
-          path: app/build/outputs/apk/debug/*.apk
+      - uses: actions/upload-artifact@v4
+        with: {name: Rabie_ORA_Result, path: app/build/outputs/apk/debug/*.apk}
