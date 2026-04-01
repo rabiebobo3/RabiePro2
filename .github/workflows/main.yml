@@ -136,7 +136,6 @@ jobs:
           import androidx.appcompat.app.AppCompatActivity;
           import androidx.media3.common.*;
           import androidx.media3.exoplayer.*;
-          import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
           import androidx.media3.ui.PlayerView;
           import androidx.recyclerview.widget.*;
           import com.android.volley.*;
@@ -186,19 +185,17 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // --- [ إعدادات منع تجميد الصورة - Advanced LoadControl ] ---
+                  // --- [ تعديل الأمانة البرمجية: أقوى دالة لمنع تجمد الصورة ] ---
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(
-                          20000, // الحد الأدنى للتخزين (20 ثانية) لضمان استمرار البث
-                          60000, // أقصى حد للتخزين (دقيقة واحدة)
-                          3000,  // التخزين قبل إعادة التشغيل بعد التوقف
-                          5000   // التخزين الكلي المطلوب لبدء التشغيل أول مرة
-                      ).build();
+                      .setBufferDurationsMs(50000, 100000, 2500, 5000)
+                      .setBackBuffer(30000, true)
+                      .setPrioritizeTimeOverSizeThresholds(true)
+                      .build();
 
                   player = new ExoPlayer.Builder(this)
                       .setLoadControl(loadControl)
-                      .setMediaSourceFactory(new DefaultMediaSourceFactory(this))
                       .build();
+                  // ---------------------------------------------------------
 
                   smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
@@ -256,16 +253,10 @@ jobs:
               }
 
               @Override
-              protected void onStop() {
-                  super.onStop();
-                  if (player != null) player.pause();
-              }
+              protected void onStop() { super.onStop(); if (player != null) player.pause(); }
 
               @Override
-              protected void onDestroy() {
-                  super.onDestroy();
-                  if (player != null) { player.release(); player = null; }
-              }
+              protected void onDestroy() { super.onDestroy(); if (player != null) { player.release(); player = null; } }
 
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -323,8 +314,8 @@ jobs:
               private String getT(Ch c) { 
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
-                  if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie";
-                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series";
+                  if (g.contains("movie") || g.contains("أفلام")) return "movie";
+                  if (g.contains("series") || g.contains("مسلسل")) return "series";
                   return "live";
               }
 
@@ -451,18 +442,10 @@ jobs:
           cat <<EOF > app/src/main/res/drawable/focus_highlight.xml
           <selector xmlns:android="http://schemas.android.com/apk/res/android">
               <item android:state_focused="true">
-                  <shape>
-                      <solid android:color="#33FF9100"/>
-                      <stroke android:width="4dp" android:color="#ff9100"/>
-                      <corners android:radius="12dp"/>
-                  </shape>
+                  <shape><solid android:color="#33FF9100"/><stroke android:width="4dp" android:color="#ff9100"/><corners android:radius="12dp"/></shape>
               </item>
               <item>
-                  <shape>
-                      <solid android:color="@android:color/transparent"/>
-                      <stroke android:width="1dp" android:color="#20FFFFFF"/>
-                      <corners android:radius="12dp"/>
-                  </shape>
+                  <shape><solid android:color="@android:color/transparent"/><stroke android:width="1dp" android:color="#20FFFFFF"/><corners android:radius="12dp"/></shape>
               </item>
           </selector>
           EOF
@@ -475,7 +458,7 @@ jobs:
           cat <<EOF > app/src/main/res/layout/item_card.xml
           <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="220dp" android:layout_margin="8dp" app:cardCornerRadius="14dp" app:cardElevation="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/focus_highlight">
               <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-                  <ImageView android:id="@+id/img_logo" android:layout_width="parent" android:layout_height="parent" android:scaleType="centerCrop"/>
+                  <ImageView android:id="@+id/img_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
                   <View android:layout_width="match_parent" android:layout_height="60dp" android:layout_alignParentBottom="true" android:background="#E6000000"/>
                   <TextView android:id="@+id/txt_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:padding="8dp" android:textColor="#ff9100" android:textSize="13sp" android:textStyle="bold" android:maxLines="2" android:gravity="center"/>
               </RelativeLayout>
@@ -505,16 +488,7 @@ jobs:
                   versionCode 41
                   versionName "41.0"
               }
-              buildTypes {
-                  release {
-                      minifyEnabled false
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-                  }
-              }
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
-              }
+              compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
           dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -532,15 +506,10 @@ jobs:
           }
           EOF
 
-          # --- [ AndroidManifest - Hardware Acceleration Enabled ] ---
           echo '<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              
-              <uses-feature android:name="android.software.leanback" android:required="false" />
-              <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-
               <application 
                   android:theme="@style/Theme.AppCompat.NoActionBar" 
                   android:usesCleartextTraffic="true" 
@@ -550,12 +519,8 @@ jobs:
                   android:roundIcon="@mipmap/ic_launcher" 
                   android:banner="@mipmap/ic_launcher"
                   android:logo="@mipmap/ic_launcher"
-                  android:hardwareAccelerated="true"
-                  android:largeHeap="true"
                   android:focusable="true">
-                  
                   <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
-                  
                   <activity android:name="com.rabie.iptv.MainActivity" 
                       android:exported="true" 
                       android:screenOrientation="landscape" 
@@ -575,4 +540,4 @@ jobs:
 
       - name: Upload_V41_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Ultimate, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Final_Buffer, path: app/build/outputs/apk/debug/*.apk }
