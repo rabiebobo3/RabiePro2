@@ -166,6 +166,7 @@ jobs:
               private Handler handler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
+              private boolean isRetrying = false;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -185,17 +186,19 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // --- [ تعديل الأمانة البرمجية: أقوى دالة لمنع تجمد الصورة ] ---
+                  // --- [ تعديل الأمانة البرمجية: أقوى دالة لمنع تجمد الصورة + تحسين الاسترجاع ] ---
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(50000, 100000, 2500, 5000)
-                      .setBackBuffer(30000, true)
+                      .setBufferDurationsMs(30000, 60000, 1000, 2000)
+                      .setBackBuffer(20000, true)
                       .setPrioritizeTimeOverSizeThresholds(true)
                       .build();
 
                   player = new ExoPlayer.Builder(this)
                       .setLoadControl(loadControl)
+                      .setSeekBackIncrementMs(10000)
+                      .setSeekForwardIncrementMs(10000)
                       .build();
-                  // ---------------------------------------------------------
+                  // ---------------------------------------------------------------------------
 
                   smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
@@ -212,7 +215,21 @@ jobs:
                       public void onPlaybackStateChanged(int s) {
                           int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
                           ps.setVisibility(v); pf.setVisibility(v);
-                          if(s == Player.STATE_READY && currentCh != null) savePos();
+                          
+                          if (s == Player.STATE_READY) {
+                              isRetrying = false;
+                              if (currentCh != null) savePos();
+                          }
+                          
+                          // تحسين دالة تجمد الصورة: إعادة المحاولة فوراً عند حدوث خطأ أو توقف غير متوقع
+                          if (s == Player.STATE_IDLE && currentCh != null && !isRetrying) {
+                              retryPlayback();
+                          }
+                      }
+                      public void onPlayerError(PlaybackException error) {
+                          // إظهار عجلة التحميل فوراً عند الخطأ ومحاولة جلب البيانات
+                          ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                          retryPlayback();
                       }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
@@ -250,6 +267,15 @@ jobs:
                   findViewById(R.id.tab_movie).setOnClickListener(v -> setMode("movie"));
                   findViewById(R.id.tab_series).setOnClickListener(v -> setMode("series"));
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
+              }
+
+              private void retryPlayback() {
+                  if (currentCh == null) return;
+                  isRetrying = true;
+                  handler.postDelayed(() -> {
+                      player.prepare();
+                      player.play();
+                  }, 1500); // محاولة الجلب كل ثانية ونصف عند التجمد
               }
 
               @Override
@@ -298,7 +324,7 @@ jobs:
               }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; savedItemIndex = pos;
+                  currentCh = c; savedItemIndex = pos; isRetrying = false;
                   player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); 
                   long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
                   if(r > 0 && !currentMode.equals("live")) player.seekTo(r);
@@ -311,7 +337,6 @@ jobs:
               private void playNext() { int i = currentItems.indexOf(currentCh); if(i != -1 && i < currentItems.size()-1) playChannel(currentItems.get(i+1), i+1, true); }
               private void playPrev() { int i = currentItems.indexOf(currentCh); if(i > 0) playChannel(currentItems.get(i-1), i-1, true); }
 
-              // --- [ استرجاع دالة التصنيف الأصلية لربيع ] ---
               private String getT(Ch c) { 
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
