@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Full_600_Logic
+name: Rabie_Pro_V42_Final_Auto_Reload
 on: [push]
 jobs:
   build:
@@ -8,487 +8,690 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_The_Full_Rabie_Structure
+      - name: Build_Final_Professional_Stall_Fixed
         run: |
-          # --- إعداد ملفات المشروع الأساسية ---
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
           cat <<EOF > settings.gradle
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-              repositories {
-                  google()
-                  mavenCentral()
-                  maven { url "https://jitpack.io" }
-              }
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } }
           }
           include ':app'
           EOF
 
-          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/values
+          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
+          
+          curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
+          curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
+          curl -Lo app/src/main/res/mipmap-xxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
+          curl -Lo app/src/main/res/mipmap-xxxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
+          curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          # --- واجهة المستخدم (التقسيم المتساوي 0.25) ---
-          cat <<'EOF' > app/src/main/res/layout/activity_main.xml
+          cat <<EOF > app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout 
-              xmlns:android="http://schemas.android.com/apk/res/android"
+          <resources>
+              <color name="colorPrimary">#05030A</color>
+              <color name="colorPrimaryDark">#000000</color>
+              <color name="colorAccent">#FF9100</color>
+              <color name="white">#FFFFFF</color>
+          </resources>
+          EOF
+
+          cat <<EOF > app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">Rabie Pro V42</string>
+          </resources>
+          EOF
+
+          echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
+
+          cat <<EOF > app/src/main/res/layout/activity_main.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent" 
-              android:layout_height="match_parent" 
-              android:background="#05030A" 
-              android:keepScreenOn="true">
+              android:layout_width="match_parent" android:layout_height="match_parent" 
+              android:background="#05030A" android:keepScreenOn="true">
+              
+              <LinearLayout android:id="@+id/splash_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:gravity="center" android:elevation="20dp">
+                  <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000" app:cardElevation="0dp">
+                      <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
+                  </androidx.cardview.widget.CardView>
+              </LinearLayout>
 
-              <LinearLayout 
-                  android:id="@+id/main_parent_layout" 
-                  android:layout_width="match_parent" 
-                  android:layout_height="match_parent" 
-                  android:orientation="vertical">
-
-                  <LinearLayout 
-                      android:id="@+id/top_bar"
-                      android:layout_width="match_parent" 
-                      android:layout_height="65dp" 
-                      android:background="#000000" 
-                      android:gravity="center_vertical" 
-                      android:padding="10dp"
-                      android:orientation="horizontal">
-                      
-                      <TextView 
-                          android:id="@+id/app_logo"
-                          android:layout_width="wrap_content" 
-                          android:layout_height="wrap_content" 
-                          android:text="RABIE PRO TV" 
-                          android:textColor="#ff9100" 
-                          android:textStyle="bold" 
-                          android:textSize="22sp"/>
-                          
-                      <View 
-                          android:layout_width="0dp" 
-                          android:layout_height="match_parent" 
-                          android:layout_weight="1"/>
-                          
-                      <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="45dp" android:text="القنوات" android:background="@drawable/tab_style" android:textColor="#FFFFFF" android:layout_marginRight="5dp"/>
-                      <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="45dp" android:text="الأفلام" android:background="@drawable/tab_style" android:textColor="#FFFFFF" android:layout_marginRight="5dp"/>
-                      <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="45dp" android:text="المسلسلات" android:background="@drawable/tab_style" android:textColor="#FFFFFF"/>
+              <LinearLayout android:id="@+id/main_ui_container" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
+                  <LinearLayout android:id="@+id/top_tabs" android:layout_width="match_parent" android:layout_height="65dp" android:background="#000" android:gravity="center_vertical" android:padding="10dp">
+                      <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp">
+                          <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
+                      </androidx.cardview.widget.CardView>
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RABIE PRO" android:textColor="#ff9100" android:textStyle="bold" android:textSize="22sp" android:layout_marginRight="20dp"/>
+                      <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"/>
+                      <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="42dp" android:text="القنوات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
+                      <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="42dp" android:text="الأفلام" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
+                      <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="42dp" android:text="المسلسلات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
+                      <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
                   </LinearLayout>
 
-                  <LinearLayout 
-                      android:id="@+id/content_split_area"
-                      android:layout_width="match_parent" 
-                      android:layout_height="match_parent" 
-                      android:orientation="horizontal">
-
-                      <LinearLayout 
-                          android:layout_width="0dp" 
-                          android:layout_height="match_parent" 
-                          android:layout_weight="0.50" 
-                          android:orientation="vertical" 
-                          android:padding="12dp">
-                          
-                          <androidx.cardview.widget.CardView 
-                              android:id="@+id/player_card"
-                              android:layout_width="match_parent" 
-                              android:layout_height="0dp" 
-                              android:layout_weight="0.75" 
-                              app:cardCornerRadius="18dp" 
-                              app:cardBackgroundColor="#000000">
-                              
-                              <androidx.media3.ui.PlayerView 
-                                  android:id="@+id/small_player_view" 
-                                  android:layout_width="match_parent" 
-                                  android:layout_height="match_parent" 
-                                  app:use_controller="false"/>
-                                  
-                              <ProgressBar 
-                                  android:id="@+id/loading_indicator_small" 
-                                  android:layout_width="60dp" 
-                                  android:layout_height="60dp" 
-                                  android:layout_gravity="center" 
-                                  android:visibility="gone" 
-                                  android:indeterminateTint="#ff9100"/>
+                  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
+                      <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
+                          <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
+                              <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
+                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
                           </androidx.cardview.widget.CardView>
-                          
-                          <TextView 
-                              android:id="@+id/channel_title_display" 
-                              android:layout_width="match_parent" 
-                              android:layout_height="wrap_content" 
-                              android:text="RABIE PRO V42" 
-                              android:textColor="#ff9100" 
-                              android:textSize="20sp" 
-                              android:layout_marginTop="12dp" 
-                              android:gravity="center"
-                              android:textStyle="bold"/>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
+                              <TextView android:id="@+id/txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اختر محتوى" android:textColor="#ff9100" android:textSize="20sp" android:textStyle="bold" android:maxLines="1"/>
+                              <Button android:id="@+id/btn_toggle_fav" android:layout_width="wrap_content" android:layout_height="42dp" android:text="⭐ إضافة للمفضلة" android:layout_marginTop="15dp" android:focusable="true" android:background="@drawable/focus_highlight" android:paddingHorizontal="25dp" android:textColor="#FFF"/>
+                          </LinearLayout>
                       </LinearLayout>
-                      
-                      <androidx.recyclerview.widget.RecyclerView 
-                          android:id="@+id/recycler_items" 
-                          android:layout_width="0dp" 
-                          android:layout_height="match_parent" 
-                          android:layout_weight="0.25" 
-                          android:background="#0A0817"
-                          android:padding="4dp"/>
-                          
-                      <androidx.recyclerview.widget.RecyclerView 
-                          android:id="@+id/recycler_groups" 
-                          android:layout_width="0dp" 
-                          android:layout_height="match_parent" 
-                          android:layout_weight="0.25" 
-                          android:background="#120E26"
-                          android:padding="4dp"/>
+                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_items" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.25" android:background="#0A0817" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
+                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
                   </LinearLayout>
               </LinearLayout>
 
-              <FrameLayout 
-                  android:id="@+id/fullscreen_container" 
-                  android:layout_width="match_parent" 
-                  android:layout_height="match_parent" 
-                  android:visibility="gone" 
-                  android:background="#000000">
-
-                  <androidx.media3.ui.PlayerView 
-                      android:id="@+id/full_player_view" 
-                      android:layout_width="match_parent" 
-                      android:layout_height="match_parent" 
-                      app:use_controller="false" />
-                  
-                  <LinearLayout 
-                      android:id="@+id/vod_control_overlay" 
-                      android:layout_width="match_parent" 
-                      android:layout_height="wrap_content" 
-                      android:layout_gravity="bottom" 
-                      android:orientation="vertical" 
-                      android:background="#CC000000" 
-                      android:padding="25dp" 
-                      android:visibility="gone">
-                      
-                      <SeekBar 
-                          android:id="@+id/vod_seekbar" 
-                          android:layout_width="match_parent" 
-                          android:layout_height="wrap_content" 
-                          android:progressTint="#ff9100" 
-                          android:thumbTint="#ff9100"
-                          android:layout_marginBottom="15dp"/>
-                          
-                      <LinearLayout 
-                          android:layout_width="wrap_content" 
-                          android:layout_height="wrap_content" 
-                          android:layout_gravity="center" 
-                          android:orientation="horizontal">
-                          
-                          <ImageButton android:id="@+id/btn_rewind" android:layout_width="65dp" android:layout_height="65dp" android:src="@android:drawable/ic_media_rew" android:background="?attr/selectableItemBackgroundBorderless" android:scaleType="fitCenter"/>
-                          <ImageButton android:id="@+id/btn_play_pause" android:layout_width="85dp" android:layout_height="85dp" android:src="@android:drawable/ic_media_pause" android:background="?attr/selectableItemBackgroundBorderless" android:scaleType="fitCenter" android:layout_marginLeft="20dp" android:layout_marginRight="20dp"/>
-                          <ImageButton android:id="@+id/btn_forward" android:layout_width="65dp" android:layout_height="65dp" android:src="@android:drawable/ic_media_ff" android:background="?attr/selectableItemBackgroundBorderless" android:scaleType="fitCenter"/>
+              <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
+                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
+                  <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
+                      <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
+                          <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
+                              <ImageView android:id="@+id/full_ch_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+                          </androidx.cardview.widget.CardView>
+                          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                              <TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/>
+                          </LinearLayout>
+                          <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
+                          <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
+                          <androidx.mediarouter.app.MediaRouteButton android:id="@+id/media_route_button" android:layout_width="50dp" android:layout_height="50dp" android:focusable="true" android:background="@drawable/round_btn"/>
+                      </LinearLayout>
+                      <LinearLayout android:id="@+id/vod_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#B3000000" android:padding="15dp" android:gravity="center">
+                          <SeekBar android:id="@+id/full_seekbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="#ff9100" android:thumbTint="#ff9100" android:focusable="true"/>
+                          <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+                               <TextView android:id="@+id/txt_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00 / 00:00" android:textColor="#FFF" android:textSize="14sp" android:layout_centerVertical="true"/>
+                               <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_centerInParent="true">
+                                  <ImageButton android:id="@+id/btn_prev_item" android:layout_width="45dp" android:layout_height="45dp" android:src="@android:drawable/ic_media_previous" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
+                                  <ImageButton android:id="@+id/btn_rew" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_media_rew" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
+                                  <ImageButton android:id="@+id/btn_play_pause" android:layout_width="65dp" android:layout_height="65dp" android:src="@android:drawable/ic_media_pause" android:background="@drawable/round_btn_orange" android:focusable="true"/>
+                                  <ImageButton android:id="@+id/btn_ffwd" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_media_ff" android:background="@drawable/round_btn" android:layout_marginLeft="10dp" android:focusable="true"/>
+                                  <ImageButton android:id="@+id/btn_next_item" android:layout_width="45dp" android:layout_height="45dp" android:src="@android:drawable/ic_media_next" android:background="@drawable/round_btn" android:layout_marginLeft="10dp" android:focusable="true"/>
+                               </LinearLayout>
+                          </RelativeLayout>
                       </LinearLayout>
                   </LinearLayout>
-                  
-                  <ProgressBar android:id="@+id/loading_indicator_full" android:layout_width="90dp" android:layout_height="90dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
               </FrameLayout>
           </RelativeLayout>
           EOF
 
-          # --- كود الجافا (600 سطر - المنطق الكامل دون اختصار) ---
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
 
-          import android.os.*;
-          import android.view.*;
-          import android.widget.*;
+          import android.content.Context;
+          import android.content.Intent;
+          import android.content.SharedPreferences;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.view.LayoutInflater;
+          import android.view.View;
+          import android.view.ViewGroup;
+          import android.view.Window;
+          import android.view.WindowManager;
+          import android.widget.ImageButton;
+          import android.widget.ImageView;
+          import android.widget.LinearLayout;
+          import android.widget.ProgressBar;
+          import android.widget.SeekBar;
+          import android.widget.TextView;
+          import android.widget.Toast;
           import androidx.activity.OnBackPressedCallback;
-          import androidx.annotation.NonNull;
+          import androidx.appcompat.app.AlertDialog;
           import androidx.appcompat.app.AppCompatActivity;
-          import androidx.media3.common.*;
-          import androidx.media3.exoplayer.*;
+          import androidx.media3.common.MediaItem;
+          import androidx.media3.common.PlaybackException;
+          import androidx.media3.common.Player;
+          import androidx.media3.exoplayer.DefaultLoadControl;
+          import androidx.media3.exoplayer.ExoPlayer;
           import androidx.media3.ui.PlayerView;
-          import androidx.recyclerview.widget.*;
-          import com.android.volley.*;
-          import com.android.volley.toolbox.*;
-          import java.util.*;
+          import androidx.recyclerview.widget.GridLayoutManager;
+          import androidx.recyclerview.widget.LinearLayoutManager;
+          import androidx.recyclerview.widget.RecyclerView;
+          import com.android.volley.Request;
+          import com.android.volley.RequestQueue;
+          import com.android.volley.toolbox.StringRequest;
+          import com.android.volley.toolbox.Volley;
+          import com.bumptech.glide.Glide;
+          import com.google.gson.Gson;
+          import com.google.gson.reflect.TypeToken;
+          import java.util.ArrayList;
+          import java.util.HashMap;
+          import java.util.LinkedHashMap;
+          import java.util.List;
+          import java.util.Map;
+          import java.util.Stack;
 
-          /**
-           * Developer: Rabie Pro
-           * Application: Rabie IPTV V42
-           * Goal: High Performance, Full Control, No Code Reduction.
-           */
           public class MainActivity extends AppCompatActivity {
-              
-              // --- تصريح عن المتغيرات (Variables) ---
-              private ExoPlayer rabiePlayer;
-              private List<ChannelData> masterList = new ArrayList<>();
-              private Map<String, List<ChannelData>> liveCategories = new LinkedHashMap<>();
-              private Map<String, List<ChannelData>> movieCategories = new LinkedHashMap<>();
-              private Map<String, List<ChannelData>> seriesCategories = new LinkedHashMap<>();
-              
-              private RecyclerView rvGroups, rvItems;
-              private PlayerView smallPV, fullPV;
-              private View fullContainer, vodPanel;
-              private SeekBar videoSeekBar;
-              private ImageButton playPauseActionBtn;
-              private ProgressBar progressSmall, progressFull;
-              private TextView activeTitle;
-              
-              private String currentAppMode = "live";
-              private Handler syncHandler = new Handler(Looper.getMainLooper());
-              private boolean isUserTouchingSeekBar = false;
 
-              // --- كلاس البيانات (Data Model) ---
-              static class ChannelData {
-                  String channelName;
-                  String streamUrl;
-                  String groupTitle;
-                  
-                  public ChannelData(String n, String u, String g) {
-                      this.channelName = n;
-                      this.streamUrl = u;
-                      this.groupTitle = g;
-                  }
+              private ExoPlayer player;
+              private PlayerView smallPlayerView, fullPlayerView;
+              private List<Channel> database = new ArrayList<>();
+              private Map<String, List<Channel>> liveData = new LinkedHashMap<>();
+              private Map<String, List<Channel>> movieData = new LinkedHashMap<>();
+              private Map<String, List<Channel>> seriesData = new LinkedHashMap<>();
+              private List<Channel> favoriteList = new ArrayList<>();
+              private List<Channel> currentItems = new ArrayList<>();
+              private Stack<String> historyStack = new Stack<>();
+              private String currentParentId = "root";
+              private String currentCategory = "";
+              private String currentMode = "live";
+              private Channel currentChannel;
+              private RecyclerView rvGroups, rvItems;
+              private TextView txtTitle, txtTime, tFullChName;
+              private View mainUiContainer, fullContainer, overlayFull, vodControls, splashScreen, infoBar, leftSideContainer;
+              private ImageView fullChannelLogo, fullFavBtn;
+              private SeekBar seekBar;
+              private ProgressBar loadingSmall, loadingFull;
+              private ImageButton btnPlayPause, btnRewind, btnForward, btnNext, btnPrev, btnCast;
+              private Handler handler = new Handler(Looper.getMainLooper());
+              private long lastClickTime = 0;
+              private int savedItemIndex = -1;
+
+              private long lastPlaybackPosition = -1;
+              private int stallCounter = 0;
+
+              static class Channel {
+                  String n, u, g, l, id, pid, isF;
               }
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
+                  supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
                   setContentView(R.layout.activity_main);
+                  hideSystemUI();
+
+                  splashScreen = findViewById(R.id.splash_screen);
+                  mainUiContainer = findViewById(R.id.main_ui_container);
+                  infoBar = findViewById(R.id.infobar_layout);
+                  leftSideContainer = findViewById(R.id.left_side_container);
+                  fullChannelLogo = findViewById(R.id.full_ch_logo);
+                  tFullChName = findViewById(R.id.full_ch_name);
+                  fullFavBtn = findViewById(R.id.full_fav_btn);
+                  btnCast = findViewById(R.id.btn_dlna);
+
+                  handler.postDelayed(() -> {
+                      splashScreen.setVisibility(View.GONE);
+                      mainUiContainer.setVisibility(View.VISIBLE);
+                  }, 2000);
+
+                  DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                          .setBufferDurationsMs(500, 5000, 500, 500)
+                          .setPrioritizeTimeOverSizeThresholds(true)
+                          .build();
+
+                  player = new ExoPlayer.Builder(this)
+                          .setLoadControl(loadControl)
+                          .build();
+
+                  smallPlayerView = findViewById(R.id.small_player);
+                  fullPlayerView = findViewById(R.id.full_player);
+                  fullContainer = findViewById(R.id.full_container);
+                  overlayFull = findViewById(R.id.overlay_full);
+                  txtTime = findViewById(R.id.txt_time);
+                  seekBar = findViewById(R.id.full_seekbar);
+                  vodControls = findViewById(R.id.vod_controls);
+                  loadingSmall = findViewById(R.id.loading_s);
+                  loadingFull = findViewById(R.id.loading_f);
+                  btnPlayPause = findViewById(R.id.btn_play_pause);
+                  btnRewind = findViewById(R.id.btn_rew);
+                  btnForward = findViewById(R.id.btn_ffwd);
+                  btnNext = findViewById(R.id.btn_next_item);
+                  btnPrev = findViewById(R.id.btn_prev_item);
+
+                  smallPlayerView.setPlayer(player);
+
+                  player.addListener(new Player.Listener() {
+                      @Override
+                      public void onPlaybackStateChanged(int state) {
+                          int visibility = (state == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
+                          loadingSmall.setVisibility(visibility);
+                          loadingFull.setVisibility(visibility);
+                          if (state == Player.STATE_READY) {
+                              lastPlaybackPosition = -1;
+                              stallCounter = 0;
+                              saveCurrentPosition();
+                          }
+                      }
+
+                      @Override
+                      public void onPlayerError(PlaybackException error) {
+                          forcePlayerReload();
+                      }
+
+                      @Override
+                      public void onIsPlayingChanged(boolean isPlaying) {
+                          btnPlayPause.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                      }
+                  });
+
+                  startStallDetectionTask();
+
+                  btnPlayPause.setOnClickListener(v -> { if (player.isPlaying()) player.pause(); else player.play(); });
+                  btnRewind.setOnClickListener(v -> player.seekBack());
+                  btnForward.setOnClickListener(v -> player.seekForward());
+                  btnNext.setOnClickListener(v -> playNextItem());
+                  btnPrev.setOnClickListener(v -> playPreviousItem());
                   
-                  // الحفاظ على الشاشة مشتعلة دائماً
-                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                  btnCast.setOnClickListener(v -> {
+                      if (currentChannel != null) {
+                          Intent intent = new Intent(Intent.ACTION_VIEW);
+                          intent.setDataAndType(Uri.parse(currentChannel.u), "video/*");
+                          startActivity(Intent.createChooser(intent, "Open with..."));
+                      }
+                  });
 
-                  // استدعاء الدوال الأساسية للتشغيل
-                  bindViewsToCode();
-                  initExoPlayerEngine();
-                  setupUserInteractions();
-                  requestDataFromServer();
-                  launchSeekBarUpdater();
+                  fullContainer.setOnClickListener(v -> showOverlayControls());
+                  fullFavBtn.setOnClickListener(v -> toggleFavorite());
+                  findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFavorite());
 
-                  // التعامل مع زر الرجوع بنظام Android 13+
+                  rvGroups = findViewById(R.id.rv_groups);
+                  rvItems = findViewById(R.id.rv_items);
+                  txtTitle = findViewById(R.id.txt_title);
+                  rvGroups.setLayoutManager(new LinearLayoutManager(this));
+
+                  loadFavoritesFromPrefs();
+                  fetchM3uData();
+                  updateProgressBarTask();
+
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override
                       public void handleOnBackPressed() {
-                          handleBackNavigation();
-                      }
-                  });
-              }
-
-              private void bindViewsToCode() {
-                  smallPV = findViewById(R.id.small_player_view);
-                  fullPV = findViewById(R.id.full_player_view);
-                  fullContainer = findViewById(R.id.fullscreen_container);
-                  vodPanel = findViewById(R.id.vod_control_overlay);
-                  videoSeekBar = findViewById(R.id.vod_seekbar);
-                  playPauseActionBtn = findViewById(R.id.btn_play_pause);
-                  progressSmall = findViewById(R.id.loading_indicator_small);
-                  progressFull = findViewById(R.id.loading_indicator_full);
-                  activeTitle = findViewById(R.id.channel_title_display);
-                  rvGroups = findViewById(R.id.recycler_groups);
-                  rvItems = findViewById(R.id.recycler_items);
-                  
-                  rvGroups.setLayoutManager(new LinearLayoutManager(this));
-                  rvItems.setLayoutManager(new LinearLayoutManager(this));
-              }
-
-              private void initExoPlayerEngine() {
-                  // ميزة سرعة الاستجابة (Low Latency Buffer)
-                  DefaultLoadControl customLoadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(1000, 5000, 500, 1000)
-                      .build();
-
-                  rabiePlayer = new ExoPlayer.Builder(this)
-                      .setLoadControl(customLoadControl)
-                      .build();
-                      
-                  smallPV.setPlayer(rabiePlayer);
-                  
-                  // مستمع لحالات البث
-                  rabiePlayer.addListener(new Player.Listener() {
-                      @Override
-                      public void onPlaybackStateChanged(int state) {
-                          updateLoadingState(state);
-                      }
-
-                      @Override
-                      public void onPlayerError(@NonNull PlaybackException error) {
-                          performAutoReconnect();
-                      }
-                  });
-              }
-
-              private void updateLoadingState(int state) {
-                  int visibility = (state == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
-                  progressSmall.setVisibility(visibility);
-                  progressFull.setVisibility(visibility);
-              }
-
-              private void performAutoReconnect() {
-                  // ميزة الربيع في إعادة الاتصال الفوري
-                  rabiePlayer.prepare();
-                  rabiePlayer.play();
-              }
-
-              private void setupUserInteractions() {
-                  playPauseActionBtn.setOnClickListener(v -> {
-                      if (rabiePlayer.isPlaying()) rabiePlayer.pause();
-                      else rabiePlayer.play();
-                  });
-
-                  findViewById(R.id.btn_rewind).setOnClickListener(v -> rabiePlayer.seekBack());
-                  findViewById(R.id.btn_forward).setOnClickListener(v -> rabiePlayer.seekForward());
-
-                  videoSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                      @Override 
-                      public void onProgressChanged(SeekBar sb, int p, boolean fromUser) { 
-                          if(fromUser) rabiePlayer.seekTo(p); 
-                      }
-                      @Override public void onStartTrackingTouch(SeekBar sb) { isUserTouchingSeekBar = true; }
-                      @Override public void onStopTrackingTouch(SeekBar sb) { isUserTouchingSeekBar = false; }
-                  });
-
-                  fullContainer.setOnClickListener(v -> {
-                      if (!currentAppMode.equals("live")) {
-                          toggleVodControls();
-                      }
-                  });
-
-                  findViewById(R.id.tab_live).setOnClickListener(v -> updateAppMode("live"));
-                  findViewById(R.id.tab_movie).setOnClickListener(v -> updateAppMode("movie"));
-                  findViewById(R.id.tab_series).setOnClickListener(v -> updateAppMode("series"));
-              }
-
-              private void toggleVodControls() {
-                  int nextVisibility = (vodPanel.getVisibility() == View.VISIBLE) ? View.GONE : View.VISIBLE;
-                  vodPanel.setVisibility(nextVisibility);
-              }
-
-              private void updateAppMode(String newMode) {
-                  this.currentAppMode = newMode;
-                  Map<String, List<ChannelData>> selectedMap = getActiveMap();
-                  rvGroups.setAdapter(new CategoryAdapter(new ArrayList<>(selectedMap.keySet())));
-              }
-
-              private Map<String, List<ChannelData>> getActiveMap() {
-                  if (currentAppMode.equals("movie")) return movieCategories;
-                  if (currentAppMode.equals("series")) return seriesCategories;
-                  return liveCategories;
-              }
-
-              private void requestDataFromServer() {
-                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
-                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, 
-                      this::parseM3uResponse, null));
-              }
-
-              private void parseM3uResponse(String data) {
-                  String[] allLines = data.split("\n");
-                  String tempName = "", tempGroup = "General";
-                  
-                  for (String currentLine : allLines) {
-                      if (currentLine.contains("#EXTINF:")) {
-                          tempName = currentLine.split(",")[1].trim();
-                          if (currentLine.contains("group-title=\"")) {
-                              tempGroup = currentLine.split("group-title=\"")[1].split("\"")[0];
+                          if (fullContainer.getVisibility() == View.VISIBLE) {
+                              toggleFullScreenMode(false);
+                          } else if (!historyStack.isEmpty()) {
+                              renderGallery(historyStack.pop());
+                          } else {
+                              showExitConfirmationDialog();
                           }
-                      } else if (currentLine.trim().startsWith("http")) {
-                          ChannelData channel = new ChannelData(tempName, currentLine.trim(), tempGroup);
-                          categorizeChannel(channel);
                       }
-                  }
-                  updateAppMode("live");
+                  });
+
+                  findViewById(R.id.tab_live).setOnClickListener(v -> switchDisplayMode("live"));
+                  findViewById(R.id.tab_movie).setOnClickListener(v -> switchDisplayMode("movie"));
+                  findViewById(R.id.tab_series).setOnClickListener(v -> switchDisplayMode("series"));
+                  findViewById(R.id.tab_fav).setOnClickListener(v -> switchDisplayMode("fav"));
               }
 
-              private void categorizeChannel(ChannelData ch) {
-                  String groupLower = ch.groupTitle.toLowerCase();
-                  if (groupLower.contains("movie")) {
-                      movieCategories.computeIfAbsent(ch.groupTitle, k -> new ArrayList<>()).add(ch);
-                  } else if (groupLower.contains("series")) {
-                      seriesCategories.computeIfAbsent(ch.groupTitle, k -> new ArrayList<>()).add(ch);
-                  } else {
-                      liveCategories.computeIfAbsent(ch.groupTitle, k -> new ArrayList<>()).add(ch);
-                  }
-              }
-
-              private void handleBackNavigation() {
-                  if (fullContainer.getVisibility() == View.VISIBLE) {
-                      fullContainer.setVisibility(View.GONE);
-                      PlayerView.switchTargetView(rabiePlayer, fullPV, smallPV);
-                  } else {
-                      finish();
-                  }
-              }
-
-              private void launchSeekBarUpdater() {
-                  syncHandler.postDelayed(new Runnable() {
+              private void startStallDetectionTask() {
+                  handler.postDelayed(new Runnable() {
                       @Override
                       public void run() {
-                          if (rabiePlayer != null && !isUserTouchingSeekBar && !currentAppMode.equals("live")) {
-                              videoSeekBar.setMax((int) rabiePlayer.getDuration());
-                              videoSeekBar.setProgress((int) rabiePlayer.getCurrentPosition());
+                          if (player != null && player.isPlaying() && currentMode.equals("live")) {
+                              long currentPos = player.getCurrentPosition();
+                              if (currentPos == lastPlaybackPosition) {
+                                  stallCounter++;
+                                  if (stallCounter >= 3) {
+                                      loadingSmall.setVisibility(View.VISIBLE);
+                                      loadingFull.setVisibility(View.VISIBLE);
+                                      if (stallCounter >= 10) {
+                                          forcePlayerReload();
+                                          stallCounter = 0;
+                                      }
+                                  }
+                              } else {
+                                  stallCounter = 0;
+                              }
+                              lastPlaybackPosition = currentPos;
                           }
-                          syncHandler.postDelayed(this, 1000);
+                          handler.postDelayed(this, 500);
                       }
-                  }, 1000);
+                  }, 500);
               }
 
-              // --- المحولات (RecyclerView Adapters) ---
-              class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHolder> {
+              private void forcePlayerReload() {
+                  if (currentChannel != null) {
+                      player.prepare();
+                      player.play();
+                  }
+              }
+
+              private void toggleFullScreenMode(boolean goFull) {
+                  if (goFull) {
+                      mainUiContainer.setVisibility(View.GONE);
+                      fullContainer.setVisibility(View.VISIBLE);
+                      PlayerView.switchTargetView(player, smallPlayerView, fullPlayerView);
+                      showOverlayControls();
+                      fullContainer.requestFocus();
+                  } else {
+                      fullContainer.setVisibility(View.GONE);
+                      mainUiContainer.setVisibility(View.VISIBLE);
+                      PlayerView.switchTargetView(player, fullPlayerView, smallPlayerView);
+                  }
+              }
+
+              private void playChannel(Channel channel, int position, boolean isDoubleClick) {
+                  currentChannel = channel;
+                  savedItemIndex = position;
+                  lastPlaybackPosition = -1;
+                  stallCounter = 0;
+                  
+                  player.setMediaItem(MediaItem.fromUri(channel.u));
+                  player.prepare();
+                  
+                  long savedPos = getSharedPreferences("resume_prefs", MODE_PRIVATE).getLong(channel.u, 0);
+                  if (savedPos > 0 && !currentMode.equals("live")) {
+                      player.seekTo(savedPos);
+                  }
+                  
+                  player.play();
+                  txtTitle.setText(channel.n);
+                  tFullChName.setText(channel.n);
+                  Glide.with(this).load(channel.l).placeholder(R.drawable.app_logo).into(fullChannelLogo);
+                  updateFavoriteIconUI();
+                  
+                  if (isDoubleClick || !currentMode.equals("live")) {
+                      toggleFullScreenMode(true);
+                  }
+              }
+
+              private void switchDisplayMode(String mode) {
+                  currentMode = mode;
+                  historyStack.clear();
+                  LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) rvItems.getLayoutParams();
+                  
+                  if (mode.equals("live")) {
+                      leftSideContainer.setVisibility(View.VISIBLE);
+                      params.weight = 0.55f;
+                      rvItems.setLayoutManager(new LinearLayoutManager(this));
+                  } else {
+                      leftSideContainer.setVisibility(View.GONE);
+                      params.weight = 0.80f;
+                      rvItems.setLayoutManager(new GridLayoutManager(this, 4));
+                  }
+                  rvItems.setLayoutParams(params);
+
+                  if (mode.equals("fav")) {
+                      currentItems = new ArrayList<>(favoriteList);
+                      rvGroups.setVisibility(View.GONE);
+                      rvItems.setAdapter(new ItemAdapter(currentItems));
+                      return;
+                  }
+
+                  rvGroups.setVisibility(View.VISIBLE);
+                  Map<String, List<Channel>> targetMap = mode.equals("movie") ? movieData : (mode.equals("series") ? seriesData : liveData);
+                  List<String> groups = new ArrayList<>(targetMap.keySet());
+                  rvGroups.setAdapter(new GroupAdapter(groups));
+                  if (!groups.isEmpty()) {
+                      currentCategory = groups.get(0);
+                      renderGallery("root");
+                  }
+              }
+
+              private void renderGallery(String pid) {
+                  currentParentId = pid;
+                  List<Channel> filtered = new ArrayList<>();
+                  for (Channel c : database) {
+                      if (determineType(c).equals(currentMode) && c.g.equals(currentCategory) && c.pid.equals(pid)) {
+                          filtered.add(c);
+                      }
+                  }
+                  currentItems = filtered;
+                  rvItems.setAdapter(new ItemAdapter(currentItems));
+              }
+
+              private String determineType(Channel c) {
+                  String group = c.g.toLowerCase();
+                  if ("1".equals(c.isF)) return "series";
+                  if (group.contains("movie") || group.contains("أفلام")) return "movie";
+                  if (group.contains("series") || group.contains("مسلسل")) return "series";
+                  return "live";
+              }
+
+              private void fetchM3uData() {
+                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
+                  RequestQueue queue = Volley.newRequestQueue(this);
+                  StringRequest request = new StringRequest(Request.Method.GET, url, response -> {
+                      parseM3u(response);
+                      switchDisplayMode("live");
+                  }, null);
+                  queue.add(request);
+              }
+
+              private void parseM3u(String data) {
+                  database.clear(); liveData.clear(); movieData.clear(); seriesData.clear();
+                  String[] lines = data.split("\n");
+                  Channel current = null;
+                  for (String line : lines) {
+                      if (line.contains("#EXTINF:")) {
+                          current = new Channel();
+                          current.n = line.split(",").length > 1 ? line.split(",")[1].trim() : "Unknown";
+                          current.g = line.contains("group-title=\"") ? line.split("group-title=\"")[1].split("\"")[0] : "General";
+                          current.l = line.contains("tvg-logo=\"") ? line.split("tvg-logo=\"")[1].split("\"")[0] : "";
+                          current.id = line.contains("tvg-id=\"") ? line.split("tvg-id=\"")[1].split("\"")[0] : "";
+                          current.pid = line.contains("parent-id=\"") ? line.split("parent-id=\"")[1].split("\"")[0] : "root";
+                          current.isF = line.contains("is-folder=\"") ? line.split("is-folder=\"")[1].split("\"")[0] : "0";
+                      } else if (line.trim().startsWith("http") && current != null) {
+                          current.u = line.trim();
+                          database.add(current);
+                          String type = determineType(current);
+                          Map<String, List<Channel>> map = type.equals("movie") ? movieData : (type.equals("series") ? seriesData : liveData);
+                          if (!map.containsKey(current.g)) map.put(current.g, new ArrayList<>());
+                          map.get(current.g).add(current);
+                          current = null;
+                      }
+                  }
+              }
+
+              private void saveCurrentPosition() {
+                  if (currentChannel != null && !currentMode.equals("live")) {
+                      getSharedPreferences("resume_prefs", MODE_PRIVATE).edit()
+                              .putLong(currentChannel.u, player.getCurrentPosition()).apply();
+                  }
+              }
+
+              private void loadFavoritesFromPrefs() {
+                  String json = getSharedPreferences("app_prefs", MODE_PRIVATE).getString("favs", "[]");
+                  favoriteList = new Gson().fromJson(json, new TypeToken<List<Channel>>(){}.getType());
+                  if (favoriteList == null) favoriteList = new ArrayList<>();
+              }
+
+              private void toggleFavorite() {
+                  if (currentChannel == null) return;
+                  int foundAt = -1;
+                  for (int i = 0; i < favoriteList.size(); i++) {
+                      if (favoriteList.get(i).u.equals(currentChannel.u)) foundAt = i;
+                  }
+                  if (foundAt != -1) favoriteList.remove(foundAt);
+                  else favoriteList.add(currentChannel);
+                  
+                  getSharedPreferences("app_prefs", MODE_PRIVATE).edit()
+                          .putString("favs", new Gson().toJson(favoriteList)).apply();
+                  updateFavoriteIconUI();
+              }
+
+              private void updateFavoriteIconUI() {
+                  boolean isFav = false;
+                  if (currentChannel != null) {
+                      for (Channel f : favoriteList) if (f.u.equals(currentChannel.u)) isFav = true;
+                  }
+                  fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+              }
+
+              private void showOverlayControls() {
+                  overlayFull.setVisibility(View.VISIBLE);
+                  vodControls.setVisibility(currentMode.equals("live") ? View.GONE : View.VISIBLE);
+                  handler.removeCallbacks(hideOverlayRunnable);
+                  handler.postDelayed(hideOverlayRunnable, 5000);
+              }
+
+              private Runnable hideOverlayRunnable = () -> overlayFull.setVisibility(View.GONE);
+
+              private void updateProgressBarTask() {
+                  if (player != null && !currentMode.equals("live")) {
+                      long duration = player.getDuration();
+                      long position = player.getCurrentPosition();
+                      if (duration > 0) {
+                          seekBar.setMax((int) duration);
+                          seekBar.setProgress((int) position);
+                          txtTime.setText(formatTime(position) + " / " + formatTime(duration));
+                      }
+                  }
+                  handler.postDelayed(this::updateProgressBarTask, 1000);
+              }
+
+              private String formatTime(long ms) {
+                  long seconds = (ms / 1000) % 60;
+                  long minutes = (ms / (1000 * 60)) % 60;
+                  long hours = (ms / (1000 * 60 * 60));
+                  return hours > 0 ? String.format("%02d:%02d:%02d", hours, minutes, seconds) : String.format("%02d:%02d", minutes, seconds);
+              }
+
+              private void hideSystemUI() {
+                  getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                  getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN);
+              }
+
+              private void showExitConfirmationDialog() {
+                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                          .setTitle("Exit")
+                          .setMessage("Do you want to close Rabie Pro?")
+                          .setPositiveButton("Yes", (dialog, which) -> finish())
+                          .setNegativeButton("No", null)
+                          .show();
+              }
+
+              private void playNextItem() {
+                  int index = currentItems.indexOf(currentChannel);
+                  if (index != -1 && index < currentItems.size() - 1) playChannel(currentItems.get(index + 1), index + 1, true);
+              }
+
+              private void playPreviousItem() {
+                  int index = currentItems.indexOf(currentChannel);
+                  if (index > 0) playChannel(currentItems.get(index - 1), index - 1, true);
+              }
+
+              @Override
+              protected void onPause() {
+                  super.onPause();
+                  if (player != null) player.stop();
+              }
+
+              @Override
+              protected void onDestroy() {
+                  super.onDestroy();
+                  if (player != null) player.release();
+                  handler.removeCallbacksAndMessages(null);
+              }
+
+              class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.ViewHolder> {
                   List<String> groups;
-                  CategoryAdapter(List<String> l) { this.groups = l; }
-                  @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int t) {
-                      TextView tv = new TextView(p.getContext());
-                      tv.setPadding(40, 50, 40, 50); tv.setTextColor(0xFFFF9100); tv.setFocusable(true);
-                      tv.setTextSize(16); tv.setBackgroundResource(android.R.drawable.list_selector_background);
-                      return new ViewHolder(tv);
+                  GroupAdapter(List<String> groups) { this.groups = groups; }
+                  @Override
+                  public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                      return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false));
                   }
-                  @Override public void onBindViewHolder(@NonNull ViewHolder h, int i) {
-                      String name = groups.get(i); ((TextView)h.itemView).setText(name);
-                      h.itemView.setOnClickListener(v -> {
-                          rvItems.setAdapter(new ChannelAdapter(getActiveMap().get(name)));
+                  @Override
+                  public void onBindViewHolder(ViewHolder holder, int position) {
+                      holder.name.setText(groups.get(position));
+                      holder.itemView.setOnClickListener(v -> {
+                          currentCategory = groups.get(position);
+                          renderGallery("root");
                       });
                   }
-                  @Override public int getItemCount() { return groups.size(); }
-                  class ViewHolder extends RecyclerView.ViewHolder { ViewHolder(View v) { super(v); } }
+                  @Override
+                  public int getItemCount() { return groups.size(); }
+                  class ViewHolder extends RecyclerView.ViewHolder {
+                      TextView name;
+                      ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); }
+                  }
               }
 
-              class ChannelAdapter extends RecyclerView.Adapter<ChannelAdapter.ViewHolder> {
-                  List<ChannelData> items;
-                  ChannelAdapter(List<ChannelData> i) { this.items = i; }
-                  @NonNull @Override public ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int t) {
-                      TextView tv = new TextView(p.getContext());
-                      tv.setPadding(35, 45, 35, 45); tv.setTextColor(0xFFFFFFFF); tv.setFocusable(true);
-                      tv.setTextSize(15);
-                      return new ViewHolder(tv);
+              class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
+                  List<Channel> list;
+                  ItemAdapter(List<Channel> list) { this.list = list; }
+                  @Override
+                  public int getItemViewType(int position) { return currentMode.equals("live") ? 0 : 1; }
+                  @Override
+                  public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                      int layout = (viewType == 0) ? R.layout.item_channel : R.layout.item_card;
+                      return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(layout, parent, false));
                   }
-                  @Override public void onBindViewHolder(@NonNull ViewHolder h, int i) {
-                      ChannelData c = items.get(i); ((TextView)h.itemView).setText(c.channelName);
-                      h.itemView.setOnClickListener(v -> {
-                          activeTitle.setText(c.channelName);
-                          rabiePlayer.setMediaItem(MediaItem.fromUri(c.streamUrl));
-                          rabiePlayer.prepare(); rabiePlayer.play();
-                      });
-                      h.itemView.setOnLongClickListener(v -> {
-                          fullContainer.setVisibility(View.VISIBLE);
-                          PlayerView.switchTargetView(rabiePlayer, smallPV, fullPV);
-                          return true;
+                  @Override
+                  public void onBindViewHolder(ViewHolder holder, int position) {
+                      Channel c = list.get(position);
+                      holder.name.setText(c.n);
+                      Glide.with(holder.itemView).load(c.l).placeholder(R.drawable.app_logo).into(holder.img);
+                      holder.itemView.setOnClickListener(v -> {
+                          if ("1".equals(c.isF)) {
+                              historyStack.push(currentParentId);
+                              renderGallery(c.id);
+                          } else {
+                              long now = System.currentTimeMillis();
+                              boolean isDouble = (now - lastClickTime < 500);
+                              lastClickTime = now;
+                              playChannel(c, position, isDouble);
+                          }
                       });
                   }
-                  @Override public int getItemCount() { return items.size(); }
-                  class ViewHolder extends RecyclerView.ViewHolder { ViewHolder(View v) { super(v); } }
+                  @Override
+                  public int getItemCount() { return list.size(); }
+                  class ViewHolder extends RecyclerView.ViewHolder {
+                      TextView name; ImageView img;
+                      ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); }
+                  }
               }
           }
           EOF
 
-          # --- موارد الجماليات (UI Resources) ---
-          cat <<EOF > app/src/main/res/drawable/tab_style.xml
+          cat <<EOF > app/src/main/res/drawable/round_btn.xml
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
+          EOF
+          cat <<EOF > app/src/main/res/drawable/round_btn_orange.xml
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#ff9100"/><elevation android:value="6dp"/></shape>
+          EOF
+          cat <<EOF > app/src/main/res/drawable/tab_button_style.xml
           <selector xmlns:android="http://schemas.android.com/apk/res/android">
-              <item android:state_focused="true"><shape><solid android:color="#ff9100"/><corners android:radius="12dp"/></shape></item>
-              <item android:state_pressed="true"><shape><solid android:color="#ff9100"/><corners android:radius="12dp"/></shape></item>
-              <item><shape><solid android:color="#1A1A1A"/><corners android:radius="12dp"/><stroke android:width="1dp" android:color="#333333"/></shape></item>
+              <item android:state_focused="true"><shape><solid android:color="#ff9100"/><corners android:radius="20dp"/></shape></item>
+              <item><shape><solid android:color="#120E26"/><corners android:radius="20dp"/><stroke android:width="1dp" android:color="#261E4A"/></shape></item>
           </selector>
+          EOF
+          cat <<EOF > app/src/main/res/drawable/focus_highlight.xml
+          <selector xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:state_focused="true">
+                  <shape><solid android:color="#33FF9100"/><stroke android:width="4dp" android:color="#ff9100"/><corners android:radius="12dp"/></shape>
+              </item>
+              <item>
+                  <shape><solid android:color="@android:color/transparent"/><stroke android:width="1dp" android:color="#20FFFFFF"/><corners android:radius="12dp"/></shape>
+              </item>
+          </selector>
+          EOF
+          cat <<EOF > app/src/main/res/layout/item_channel.xml
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:focusable="true" android:clickable="true" android:background="@drawable/focus_highlight" android:layout_marginVertical="2dp">
+              <TextView android:id="@+id/txt_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFF" android:textSize="15sp" android:gravity="right" android:paddingRight="12dp" android:textStyle="bold"/>
+              <ImageView android:id="@+id/img_logo" android:layout_width="40dp" android:layout_height="40dp" android:scaleType="centerInside"/>
+          </LinearLayout>
+          EOF
+          cat <<EOF > app/src/main/res/layout/item_card.xml
+          <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="220dp" android:layout_margin="8dp" app:cardCornerRadius="14dp" app:cardElevation="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/focus_highlight">
+              <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                  <ImageView android:id="@+id/img_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+                  <View android:layout_width="match_parent" android:layout_height="60dp" android:layout_alignParentBottom="true" android:background="#E6000000"/>
+                  <TextView android:id="@+id/txt_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:padding="8dp" android:textColor="#ff9100" android:textSize="13sp" android:textStyle="bold" android:maxLines="2" android:gravity="center"/>
+              </RelativeLayout>
+          </androidx.cardview.widget.CardView>
+          EOF
+
+          cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
+          package com.rabie.iptv;
+          import android.content.Context;
+          import com.google.android.gms.cast.framework.*;
+          import java.util.List;
+          public class CastOptionsProvider implements OptionsProvider {
+              @Override public CastOptions getCastOptions(Context context) { return new CastOptions.Builder().setReceiverApplicationId("CC1AD845").build(); }
+              @Override public List<SessionProvider> getAdditionalSessionProviders(Context context) { return null; }
+          }
           EOF
 
           cat <<EOF > app/build.gradle
@@ -496,16 +699,28 @@ jobs:
           android { 
               namespace 'com.rabie.iptv'
               compileSdk 34
-              defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 42; versionName "42.0" }
+              defaultConfig { 
+                  applicationId "com.rabie.iptv"
+                  minSdk 21
+                  targetSdk 34
+                  versionCode 42
+                  versionName "42.0"
+              }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
           dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'androidx.media3:media3-exoplayer:1.2.1'
               implementation 'androidx.media3:media3-ui:1.2.1'
+              implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
               implementation 'androidx.recyclerview:recyclerview:1.3.0'
               implementation 'androidx.cardview:cardview:1.0.0'
               implementation 'com.android.volley:volley:1.2.1'
+              implementation 'com.google.code.gson:gson:2.10.1'
+              implementation 'com.github.bumptech.glide:glide:4.16.0'
+              implementation 'androidx.mediarouter:mediarouter:1.7.0'
+              implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
+              constraints { implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10"); implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") }
           }
           EOF
 
@@ -513,9 +728,26 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:label="Rabie Pro V42">
-                  <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|screenSize">
-                      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+              <application 
+                  android:theme="@style/Theme.AppCompat.NoActionBar" 
+                  android:usesCleartextTraffic="true" 
+                  android:networkSecurityConfig="@xml/network_security_config" 
+                  android:label="@string/app_name" 
+                  android:icon="@mipmap/ic_launcher" 
+                  android:roundIcon="@mipmap/ic_launcher" 
+                  android:banner="@mipmap/ic_launcher"
+                  android:logo="@mipmap/ic_launcher"
+                  android:focusable="true">
+                  <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
+                  <activity android:name="com.rabie.iptv.MainActivity" 
+                      android:exported="true" 
+                      android:screenOrientation="landscape" 
+                      android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                      </intent-filter>
                   </activity>
               </application>
           </manifest>' > app/src/main/AndroidManifest.xml
@@ -524,6 +756,6 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_Rabie_Final_Artifact
+      - name: Upload_V42_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_True_600, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Final_Auto_Reload, path: app/build/outputs/apk/debug/*.apk }
