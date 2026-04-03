@@ -295,9 +295,7 @@ jobs:
                   txtTitle = findViewById(R.id.txt_title);
                   rvGroups.setLayoutManager(new LinearLayoutManager(this));
 
-                  loadFavoritesFromPrefs();
-                  fetchM3uData();
-                  updateProgressBarTask();
+                  loadFavoritesFromPrefs(); fetchM3uData(); updateProgressBarTask();
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override
@@ -338,14 +336,11 @@ jobs:
 
               private void toggleFullScreenMode(boolean goFull) {
                   if (goFull) {
-                      mainUiContainer.setVisibility(View.GONE);
-                      fullContainer.setVisibility(View.VISIBLE);
-                      PlayerView.switchTargetView(player, smallPlayerView, fullPlayerView);
-                      showOverlayControls();
+                      mainUiContainer.setVisibility(View.GONE); fullContainer.setVisibility(View.VISIBLE);
+                      PlayerView.switchTargetView(player, smallPlayerView, fullPlayerView); showOverlayControls();
                       fullContainer.requestFocus();
                   } else {
-                      fullContainer.setVisibility(View.GONE);
-                      mainUiContainer.setVisibility(View.VISIBLE);
+                      fullContainer.setVisibility(View.GONE); mainUiContainer.setVisibility(View.VISIBLE);
                       PlayerView.switchTargetView(player, fullPlayerView, smallPlayerView);
                       if (savedItemIndex != -1) {
                           rvItems.postDelayed(() -> {
@@ -359,12 +354,10 @@ jobs:
 
               private void playChannel(Channel channel, int position, boolean isDoubleClick) {
                   currentChannel = channel; savedItemIndex = position; lastPlaybackPosition = -1; stallCounter = 0;
-                  player.setMediaItem(MediaItem.fromUri(channel.u));
-                  player.prepare();
+                  player.setMediaItem(MediaItem.fromUri(channel.u)); player.prepare();
                   long savedPos = getSharedPreferences("resume_prefs", MODE_PRIVATE).getLong(channel.u, 0);
                   if (savedPos > 0 && !currentMode.equals("live")) player.seekTo(savedPos);
-                  player.play();
-                  txtTitle.setText(channel.n); tFullChName.setText(channel.n);
+                  player.play(); txtTitle.setText(channel.n); tFullChName.setText(channel.n);
                   Glide.with(this).load(channel.l).into(fullChannelLogo);
                   updateFavoriteIconUI();
                   if (isDoubleClick || !currentMode.equals("live")) toggleFullScreenMode(true);
@@ -383,27 +376,23 @@ jobs:
                   rvItems.setLayoutParams(params);
                   if (mode.equals("fav")) {
                       currentItems = new ArrayList<>(favoriteList);
-                      rvGroups.setVisibility(View.GONE);
-                      rvItems.setAdapter(new ItemAdapter(currentItems));
+                      rvGroups.setVisibility(View.GONE); rvItems.setAdapter(new ItemAdapter(currentItems));
                       return;
                   }
                   rvGroups.setVisibility(View.VISIBLE);
                   Map<String, List<Channel>> targetMap = mode.equals("movie") ? movieData : (mode.equals("series") ? seriesData : liveData);
-                  List<String> groups = new ArrayList<>(targetMap.keySet());
-                  rvGroups.setAdapter(new GroupAdapter(groups));
+                  List<String> groups = new ArrayList<>(targetMap.keySet()); rvGroups.setAdapter(new GroupAdapter(groups));
                   if (!groups.isEmpty()) { currentCategory = groups.get(0); renderGallery("root"); }
               }
 
               private void renderGallery(String pid) {
                   currentParentId = pid; List<Channel> filtered = new ArrayList<>();
-                  for (Channel c : database) {
-                      if (determineType(c).equals(currentMode) && c.g.equals(currentCategory) && c.pid.equals(pid)) filtered.add(c);
-                  }
+                  for (Channel c : database) if (determineType(c).equals(currentMode) && c.g.equals(currentCategory) && c.pid.equals(pid)) filtered.add(c);
                   currentItems = filtered; rvItems.setAdapter(new ItemAdapter(currentItems));
                   rvItems.postDelayed(() -> { if(rvItems.getChildCount() > 0) rvItems.getChildAt(0).requestFocus(); }, 200);
               }
 
-              // دالة التميز البرمجية الذكية (Smart Categorization)
+              // دالة التميز (فرز القنوات/الأفلام/المسلسلات) - محتفظ بها كما طلبت
               private String determineType(Channel c) {
                   if ("1".equals(c.isF)) return "series";
                   String g = (c.g != null) ? c.g.toLowerCase() : "";
@@ -413,13 +402,7 @@ jobs:
                   return "live";
               }
 
-              private void fetchM3uData() {
-                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
-                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, response -> {
-                      parseM3u(response); switchDisplayMode("live");
-                  }, null));
-              }
-
+              private void fetchM3uData() { String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u"; Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, response -> { parseM3u(response); switchDisplayMode("live"); }, null)); }
               private void parseM3u(String data) {
                   database.clear(); liveData.clear(); movieData.clear(); seriesData.clear();
                   String[] lines = data.split("\n"); Channel current = null;
@@ -441,7 +424,6 @@ jobs:
                       }
                   }
               }
-
               private void saveCurrentPosition() { if (currentChannel != null && !currentMode.equals("live")) getSharedPreferences("resume_prefs", MODE_PRIVATE).edit().putLong(currentChannel.u, player.getCurrentPosition()).apply(); }
               private void loadFavoritesFromPrefs() {
                   String json = getSharedPreferences("app_prefs", MODE_PRIVATE).getString("favs", "[]");
@@ -470,7 +452,7 @@ jobs:
               }
               private String formatTime(long ms) { long s=(ms/1000)%60, m=(ms/60000)%60, h=(ms/3600000); return h>0?String.format("%02d:%02d:%02d",h,m,s):String.format("%02d:%02d",m,s); }
               private void hideSystemUI() { getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN); }
-              private void showExitConfirmationDialog() { new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("خروج").setMessage("هل تريد إغلاق تطبيق Rabie Pro؟").setPositiveButton("نعم", (dialog, which) -> finish()).setNegativeButton("لا", null).show(); }
+              private void showExitConfirmationDialog() { new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("خروج").setMessage("هل تريد إغلاق تطبيق Rabie Pro V42؟").setPositiveButton("نعم", (dialog, which) -> finish()).setNegativeButton("لا", null).show(); }
               private void playNextItem() { int index = currentItems.indexOf(currentChannel); if (index != -1 && index < currentItems.size() - 1) playChannel(currentItems.get(index + 1), index + 1, true); }
               private void playPreviousItem() { int index = currentItems.indexOf(currentChannel); if (index > 0) playChannel(currentItems.get(index - 1), index - 1, true); }
               @Override protected void onPause() { super.onPause(); if (player != null) player.stop(); }
@@ -480,31 +462,20 @@ jobs:
                   List<String> groups; GroupAdapter(List<String> groups) { this.groups = groups; }
                   @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false)); }
                   @Override public void onBindViewHolder(ViewHolder holder, int position) {
-                      holder.name.setText(groups.get(position));
-                      holder.itemView.setFocusable(true);
-                      holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
+                      holder.name.setText(groups.get(position)); holder.itemView.setFocusable(true); holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
                       holder.itemView.setOnClickListener(v -> { currentCategory = groups.get(position); renderGallery("root"); });
                   }
                   @Override public int getItemCount() { return groups.size(); }
                   class ViewHolder extends RecyclerView.ViewHolder { TextView name; ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); } }
               }
-
               class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
                   List<Channel> list; ItemAdapter(List<Channel> list) { this.list = list; }
                   @Override public int getItemViewType(int position) { return currentMode.equals("live") ? 0 : 1; }
-                  @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-                      int layout = (viewType == 0) ? R.layout.item_channel : R.layout.item_card;
-                      return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(layout, parent, false));
-                  }
+                  @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(viewType == 0 ? R.layout.item_channel : R.layout.item_card, parent, false)); }
                   @Override public void onBindViewHolder(ViewHolder holder, int position) {
-                      Channel c = list.get(position); holder.name.setText(c.n);
-                      Glide.with(holder.itemView).load(c.l).into(holder.img);
-                      holder.itemView.setFocusable(true);
-                      holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
-                      holder.itemView.setOnClickListener(v -> {
-                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); }
-                          else { long now = System.currentTimeMillis(); boolean isDouble = (now - lastClickTime < 500); lastClickTime = now; playChannel(c, position, isDouble); }
-                      });
+                      Channel c = list.get(position); holder.name.setText(c.n); Glide.with(holder.itemView).load(c.l).placeholder(R.drawable.app_logo).into(holder.img);
+                      holder.itemView.setFocusable(true); holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
+                      holder.itemView.setOnClickListener(v -> { if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); } else { long now = System.currentTimeMillis(); boolean isDouble = (now - lastClickTime < 500); lastClickTime = now; playChannel(c, position, isDouble); } });
                   }
                   @Override public int getItemCount() { return list.size(); }
                   class ViewHolder extends RecyclerView.ViewHolder { TextView name; ImageView img; ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
@@ -583,7 +554,7 @@ jobs:
               implementation 'androidx.recyclerview:recyclerview:1.3.0'
               implementation 'androidx.cardview:cardview:1.0.0'
               implementation 'com.android.volley:volley:1.2.1'
-              implementation 'com.google.code.gson:gson:2.10.1'
+              implementation 'com.google.gson:gson:2.10.1'
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
