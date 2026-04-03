@@ -128,9 +128,9 @@ jobs:
           package com.rabie.iptv;
           import android.content.Context;
           import android.content.Intent;
-          import android.net.Uri;
           import android.net.ConnectivityManager;
           import android.net.NetworkInfo;
+          import android.net.Uri;
           import android.os.*;
           import android.view.*;
           import android.widget.*;
@@ -170,7 +170,7 @@ jobs:
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
 
-              // متغيرات مراقبة النبض والتجمد
+              // مراقبة النبض والتجمد
               private long lastPosition = -1;
               private int stallCount = 0;
               private boolean isNetOk = true;
@@ -193,11 +193,9 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // تحسين الـ Buffer لمنع التجمّد
+                  // Buffer محسن كما في كودك الأصلي مع تطوير بسيط للاستقرار
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(3000, 40000, 1000, 1500)
-                      .setPrioritizeTimeOverSizeThresholds(true)
-                      .build();
+                      .setBufferDurationsMs(2500, 30000, 1000, 1500).build();
 
                   player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
@@ -218,13 +216,11 @@ jobs:
                           ps.setVisibility(v); pf.setVisibility(v);
                           if(s == Player.STATE_READY) { lastPosition = -1; stallCount = 0; savePos(); }
                       }
-                      public void onPlayerError(PlaybackException e) { 
-                          handler.postDelayed(() -> forceReload(), 2000);
-                      }
+                      public void onPlayerError(PlaybackException e) { forceReload(); }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
-                  // تفعيل دالة النبض والمراقبة
+                  // دمج المراقبة والنبض
                   startStallWatcher();
                   startHeartbeat();
 
@@ -263,7 +259,6 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // دالة مراقبة التجمد (Stall Watcher)
               private void startStallWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
@@ -271,10 +266,7 @@ jobs:
                               long currentPos = player.getCurrentPosition();
                               if (currentPos == lastPosition) { 
                                   stallCount++;
-                                  if (stallCount >= 6) { // توقف لـ 3 ثوانٍ
-                                      forceReload();
-                                      stallCount = 0;
-                                  }
+                                  if (stallCount >= 4) { forceReload(); stallCount = 0; }
                               } else { stallCount = 0; }
                               lastPosition = currentPos;
                           }
@@ -283,7 +275,6 @@ jobs:
                   }, 500);
               }
 
-              // دالة قياس النبض (Heartbeat)
               private void startHeartbeat() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
@@ -299,11 +290,11 @@ jobs:
 
               private void forceReload() {
                   if (currentCh == null) return;
-                  player.prepare();
-                  player.play();
+                  player.prepare(); player.play();
               }
 
               @Override protected void onPause() { super.onPause(); if(player != null) player.stop(); }
+              @Override protected void onStop() { super.onStop(); if(player != null) player.stop(); }
               @Override protected void onDestroy() { super.onDestroy(); if(player != null) player.release(); handler.removeCallbacksAndMessages(null); }
 
               private void showOverlay() {
@@ -321,6 +312,13 @@ jobs:
                   } else { 
                       fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); 
                       PlayerView.switchTargetView(player, fullPV, smallPV);
+                      if (savedItemIndex != -1) {
+                          rvI.postDelayed(() -> {
+                              rvI.scrollToPosition(savedItemIndex);
+                              RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex);
+                              if (vh != null) vh.itemView.requestFocus();
+                          }, 150);
+                      }
                   }
               }
 
@@ -341,8 +339,8 @@ jobs:
               private String getT(Ch c) { 
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
-                  if (g.contains("movie") || g.contains("أفلام")) return "movie";
-                  if (g.contains("series") || g.contains("مسلسل")) return "series";
+                  if (g.contains("movie") || g.contains("أفلام") || g.contains("aflam")) return "movie";
+                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series";
                   return "live";
               }
 
@@ -369,6 +367,7 @@ jobs:
                   currentParentId = pid; List<Ch> filtered = new ArrayList<>();
                   for (Ch i : database) if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid)) filtered.add(i);
                   currentItems = filtered; rvI.setAdapter(new ItemAdapter(currentItems));
+                  rvI.postDelayed(() -> { if(rvI.getChildCount() > 0) rvI.getChildAt(0).requestFocus(); }, 200);
               }
 
               private void toggleFav() {
@@ -427,6 +426,7 @@ jobs:
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
                       h.n.setText(g.get(i)); h.itemView.setFocusable(true); 
+                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
                       h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); });
                   }
                   public int getItemCount() { return g.size(); }
@@ -440,8 +440,9 @@ jobs:
                   public void onBindViewHolder(VH h, int i) {
                       Ch c = items.get(i); h.n.setText(c.n); Glide.with(h.itemView).load(c.l).into(h.img);
                       h.itemView.setFocusable(true);
+                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
                       h.itemView.setOnClickListener(v -> {
-                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); }
+                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); savedItemIndex = 0; }
                           else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); }
                       });
                   }
