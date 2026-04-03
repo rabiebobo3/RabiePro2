@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Pistache
+name: Rabie_Pro_V42_Final
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Ultimate_No_Duplicate
+      - name: Build_Apk_No_More_Errors
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -25,23 +25,38 @@ jobs:
 
           mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/values
           
-          # تحميل الشعار والملفات الأساسية
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
           cp app/src/main/res/drawable/app_logo.png app/src/main/res/mipmap-hdpi/ic_launcher.png
 
+          # ملف المانيفست بدون تعليقات
+          cat <<EOF > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:label="Rabie Pro V42" android:icon="@mipmap/ic_launcher" android:banner="@mipmap/ic_launcher" android:hardwareAccelerated="true">
+                  <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/>
+                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          # ملف build.gradle بدون تعليقات عربية نهائياً
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
               namespace 'com.rabie.iptv'
               compileSdk 34
               defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 42; versionName "42.0" }
-              
-              # الحل القاتل لتضارب الكوتلن
               configurations.all {
-                  exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
-                  exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+                  resolutionStrategy {
+                      force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.10'
+                  }
               }
-              
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
           dependencies { 
@@ -58,13 +73,13 @@ jobs:
           }
           EOF
 
-          # [تأكد من وضع كود المانيفست والجافا واللايوت هنا]
-          # تم تنظيف الـ dependencies لتقليل احتمالية الخطأ
+          # هنا يتم وضع كود MainActivity.java و Layouts كما في النسخة السابقة
+          # تأكد فقط من عدم وجود أي حرف عربي خارج ملفات Strings.xml
 
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
 
-      - name: Upload_V42_Apk
+      - name: Upload_Final_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Clean, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Final, path: app/build/outputs/apk/debug/*.apk }
