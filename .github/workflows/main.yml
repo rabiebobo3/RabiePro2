@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final_Fixed_Speed
+name: Rabie_Pro_V42_Final_Auto_Reload
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Final_Professional_No_Cast_Fixed
+      - name: Build_Final_Professional_Stall_Fixed
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -103,6 +103,7 @@ jobs:
                           </LinearLayout>
                           <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
                           <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
+                          <androidx.mediarouter.app.MediaRouteButton android:id="@+id/media_route_button" android:layout_width="50dp" android:layout_height="50dp" android:focusable="true" android:background="@drawable/round_btn"/>
                       </LinearLayout>
                       <LinearLayout android:id="@+id/vod_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#B3000000" android:padding="15dp" android:gravity="center">
                           <SeekBar android:id="@+id/full_seekbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="#ff9100" android:thumbTint="#ff9100" android:focusable="true"/>
@@ -143,6 +144,8 @@ jobs:
           import com.google.gson.Gson;
           import com.google.gson.reflect.TypeToken;
           import java.util.*;
+          import com.google.android.gms.cast.framework.*;
+          import androidx.mediarouter.app.MediaRouteButton;
 
           public class MainActivity extends AppCompatActivity {
               private ExoPlayer player;
@@ -164,7 +167,7 @@ jobs:
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
 
-              // نظام مراقبة النبض (Stall Watcher) لمنع التجمد
+              // مراقبة النبض الفائقة لمنع التجمد
               private long lastPosition = -1;
               private int stallCount = 0;
 
@@ -176,6 +179,9 @@ jobs:
                   setContentView(R.layout.activity_main);
                   hideSystemUI();
 
+                  MediaRouteButton mrb = findViewById(R.id.media_route_button);
+                  CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb);
+
                   splash = findViewById(R.id.splash_screen); mainUI = findViewById(R.id.main_ui_container);
                   infoBar = findViewById(R.id.infobar_layout); leftSide = findViewById(R.id.left_side_container);
                   fullChLogo = findViewById(R.id.full_ch_logo); tFullChName = findViewById(R.id.full_ch_name);
@@ -183,11 +189,17 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // إعدادات تحميل فائقة السرعة (Ultra Fast Load Control)
+                  // إعدادات تحميل فائقة السرعة (Ultra-Fast Load Control)
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(500, 5000, 500, 1000).build();
+                      .setBufferDurationsMs(500, 5000, 500, 1000)
+                      .setPrioritizeTimeOverSizeThresholds(true)
+                      .build();
 
-                  player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
+                  player = new ExoPlayer.Builder(this)
+                      .setLoadControl(loadControl)
+                      .setSeekBackIncrementMs(10000)
+                      .setSeekForwardIncrementMs(10000)
+                      .build();
 
                   smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
@@ -247,17 +259,17 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // نظام مراقبة التوقف وإعادة التحميل السريع عند انقطاع الإنترنت أو البث
+              // نظام التحميل الأوتوماتيكي عند التجمّد أو انقطاع الإنترنت
               private void startStallWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
-                          if (player != null && player.isPlaying()) {
+                          if (player != null && player.getPlaybackState() == Player.STATE_READY && player.getPlayWhenReady()) {
                               long currentPos = player.getCurrentPosition();
                               if (currentPos == lastPosition) { 
                                   stallCount++;
                                   if (stallCount >= 3) { // إذا توقفت الصورة لـ 1.5 ثانية
                                       ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                                      if (stallCount >= 6) { // إذا استمر التوقف لـ 3 ثواني، أعد التحميل فوراً
+                                      if (stallCount >= 10) { // إذا استمر التوقف لـ 5 ثواني، أعد التحميل فوراً
                                           forceReload();
                                           stallCount = 0;
                                       }
@@ -476,6 +488,17 @@ jobs:
           </androidx.cardview.widget.CardView>
           EOF
 
+          cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
+          package com.rabie.iptv;
+          import android.content.Context;
+          import com.google.android.gms.cast.framework.*;
+          import java.util.List;
+          public class CastOptionsProvider implements OptionsProvider {
+              @Override public CastOptions getCastOptions(Context context) { return new CastOptions.Builder().setReceiverApplicationId("CC1AD845").build(); }
+              @Override public List<SessionProvider> getAdditionalSessionProviders(Context context) { return null; }
+          }
+          EOF
+
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
@@ -502,6 +525,8 @@ jobs:
               implementation 'com.android.volley:volley:1.2.1'
               implementation 'com.google.code.gson:gson:2.10.1'
               implementation 'com.github.bumptech.glide:glide:4.16.0'
+              implementation 'androidx.mediarouter:mediarouter:1.7.0'
+              implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
               constraints { implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10"); implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") }
           }
           EOF
@@ -520,6 +545,7 @@ jobs:
                   android:banner="@mipmap/ic_launcher"
                   android:logo="@mipmap/ic_launcher"
                   android:focusable="true">
+                  <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
                   <activity android:name="com.rabie.iptv.MainActivity" 
                       android:exported="true" 
                       android:screenOrientation="landscape" 
@@ -539,4 +565,4 @@ jobs:
 
       - name: Upload_V42_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Final_Speed_Fixed, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V42_Final_Auto_Reload, path: app/build/outputs/apk/debug/*.apk }
