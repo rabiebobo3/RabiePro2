@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Final
+name: Rabie_Pro_Full_Power
 on: [push]
 jobs:
   build:
@@ -8,50 +8,21 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Apk_No_More_Errors
+      - name: Build_Full_Code
         run: |
-          rm -rf app settings.gradle build.gradle gradle.properties .gradle
+          # هنا لا نقوم بحذف أي شيء، فقط نضبط البيئة
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
-          cat <<EOF > settings.gradle
-          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-              repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } }
-          }
-          include ':app'
-          EOF
-
-          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/values
-          
-          curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
-          cp app/src/main/res/drawable/app_logo.png app/src/main/res/mipmap-hdpi/ic_launcher.png
-
-          # ملف المانيفست بدون تعليقات
-          cat <<EOF > app/src/main/AndroidManifest.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:label="Rabie Pro V42" android:icon="@mipmap/ic_launcher" android:banner="@mipmap/ic_launcher" android:hardwareAccelerated="true">
-                  <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/>
-                          <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-          # ملف build.gradle بدون تعليقات عربية نهائياً
+          # تعديل الـ build.gradle لحل مشكلة التضارب فقط
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
               namespace 'com.rabie.iptv'
               compileSdk 34
               defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 42; versionName "42.0" }
+              
+              # هذا السطر هو "الدواء" لمشكلة الصور اللي بعثتها
               configurations.all {
                   resolutionStrategy {
                       force 'org.jetbrains.kotlin:kotlin-stdlib:1.9.10'
@@ -63,23 +34,11 @@ jobs:
               implementation 'androidx.appcompat:appcompat:1.6.1'
               implementation 'androidx.media3:media3-exoplayer:1.2.1'
               implementation 'androidx.media3:media3-ui:1.2.1'
-              implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
               implementation 'androidx.recyclerview:recyclerview:1.3.0'
-              implementation 'androidx.cardview:cardview:1.0.0'
-              implementation 'com.android.volley:volley:1.2.1'
               implementation 'com.google.code.gson:gson:2.10.1'
               implementation 'com.github.bumptech.glide:glide:4.16.0'
-              implementation 'de.hdodenhof:circleimageview:3.1.0'
+              # أضف هنا أي مكتبات أخرى كانت في كودك الأصلي
           }
           EOF
 
-          # هنا يتم وضع كود MainActivity.java و Layouts كما في النسخة السابقة
-          # تأكد فقط من عدم وجود أي حرف عربي خارج ملفات Strings.xml
-
-          gradle wrapper --gradle-version 8.5
-          chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
-
-      - name: Upload_Final_Apk
-        uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V42_Final, path: app/build/outputs/apk/debug/*.apk }
