@@ -171,6 +171,8 @@ jobs:
           import java.util.List;
           import java.util.Map;
           import java.util.Stack;
+          import com.google.android.gms.cast.framework.*;
+          import androidx.mediarouter.app.MediaRouteButton;
 
           public class MainActivity extends AppCompatActivity {
 
@@ -188,7 +190,7 @@ jobs:
               private String currentMode = "live";
               private Channel currentChannel;
               private RecyclerView rvGroups, rvItems;
-              private TextView txtTitle, txtTime, txtFullChannelName;
+              private TextView txtTitle, txtTime, tFullChName;
               private View mainUiContainer, fullContainer, overlayFull, vodControls, splashScreen, infoBar, leftSideContainer;
               private ImageView fullChannelLogo, fullFavBtn;
               private SeekBar seekBar;
@@ -212,12 +214,15 @@ jobs:
                   setContentView(R.layout.activity_main);
                   hideSystemUI();
 
+                  MediaRouteButton mrb = findViewById(R.id.media_route_button);
+                  CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb);
+
                   splashScreen = findViewById(R.id.splash_screen);
                   mainUiContainer = findViewById(R.id.main_ui_container);
                   infoBar = findViewById(R.id.infobar_layout);
                   leftSideContainer = findViewById(R.id.left_side_container);
                   fullChannelLogo = findViewById(R.id.full_ch_logo);
-                  txtFullChannelName = findViewById(R.id.full_ch_name);
+                  tFullChName = findViewById(R.id.full_ch_name);
                   fullFavBtn = findViewById(R.id.full_fav_btn);
                   btnCast = findViewById(R.id.btn_dlna);
 
@@ -227,13 +232,10 @@ jobs:
                   }, 2000);
 
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                          .setBufferDurationsMs(500, 5000, 500, 500)
-                          .setPrioritizeTimeOverSizeThresholds(true)
+                          .setBufferDurationsMs(2500, 8000, 1000, 1500)
                           .build();
 
-                  player = new ExoPlayer.Builder(this)
-                          .setLoadControl(loadControl)
-                          .build();
+                  player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
 
                   smallPlayerView = findViewById(R.id.small_player);
                   fullPlayerView = findViewById(R.id.full_player);
@@ -264,10 +266,8 @@ jobs:
                               saveCurrentPosition();
                           }
                       }
-                      @Override
-                      public void onPlayerError(PlaybackException error) { forcePlayerReload(); }
-                      @Override
-                      public void onIsPlayingChanged(boolean isPlaying) { btnPlayPause.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
+                      @Override public void onPlayerError(PlaybackException error) { forcePlayerReload(); }
+                      @Override public void onIsPlayingChanged(boolean isPlaying) { btnPlayPause.setImageResource(isPlaying ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
                   startStallDetectionTask();
@@ -295,10 +295,13 @@ jobs:
                   txtTitle = findViewById(R.id.txt_title);
                   rvGroups.setLayoutManager(new LinearLayoutManager(this));
 
-                  loadFavoritesFromPrefs(); fetchM3uData(); updateProgressBarTask();
+                  loadFavoritesFromPrefs();
+                  fetchM3uData();
+                  updateProgressBarTask();
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-                      @Override public void handleOnBackPressed() {
+                      @Override
+                      public void handleOnBackPressed() {
                           if (fullContainer.getVisibility() == View.VISIBLE) toggleFullScreenMode(false);
                           else if (!historyStack.isEmpty()) renderGallery(historyStack.pop());
                           else showExitConfirmationDialog();
@@ -318,11 +321,12 @@ jobs:
                               long currentPos = player.getCurrentPosition();
                               if (currentPos == lastPlaybackPosition) {
                                   stallCounter++;
-                                  if (stallCounter >= 3) {
-                                      loadingSmall.setVisibility(View.VISIBLE); loadingFull.setVisibility(View.VISIBLE);
-                                      if (stallCounter >= 10) { forcePlayerReload(); stallCounter = 0; }
+                                  if (stallCounter >= 2) {
+                                      loadingSmall.setVisibility(View.VISIBLE);
+                                      loadingFull.setVisibility(View.VISIBLE);
+                                      if (stallCounter >= 4) { forcePlayerReload(); stallCounter = 0; }
                                   }
-                              } else { stallCounter = 0; }
+                              } else { stallCounter = 0; loadingSmall.setVisibility(View.GONE); loadingFull.setVisibility(View.GONE); }
                               lastPlaybackPosition = currentPos;
                           }
                           handler.postDelayed(this, 500);
@@ -334,90 +338,129 @@ jobs:
 
               private void toggleFullScreenMode(boolean goFull) {
                   if (goFull) {
-                      mainUiContainer.setVisibility(View.GONE); fullContainer.setVisibility(View.VISIBLE);
-                      PlayerView.switchTargetView(player, smallPlayerView, fullPlayerView); showOverlayControls();
+                      mainUiContainer.setVisibility(View.GONE);
+                      fullContainer.setVisibility(View.VISIBLE);
+                      PlayerView.switchTargetView(player, smallPlayerView, fullPlayerView);
+                      showOverlayControls();
                       fullContainer.requestFocus();
                   } else {
-                      fullContainer.setVisibility(View.GONE); mainUiContainer.setVisibility(View.VISIBLE);
+                      fullContainer.setVisibility(View.GONE);
+                      mainUiContainer.setVisibility(View.VISIBLE);
                       PlayerView.switchTargetView(player, fullPlayerView, smallPlayerView);
+                      if (savedItemIndex != -1) {
+                          rvItems.postDelayed(() -> {
+                              rvItems.scrollToPosition(savedItemIndex);
+                              RecyclerView.ViewHolder vh = rvItems.findViewHolderForAdapterPosition(savedItemIndex);
+                              if (vh != null) vh.itemView.requestFocus();
+                          }, 150);
+                      }
                   }
               }
 
               private void playChannel(Channel channel, int position, boolean isDoubleClick) {
                   currentChannel = channel; savedItemIndex = position; lastPlaybackPosition = -1; stallCounter = 0;
-                  player.setMediaItem(MediaItem.fromUri(channel.u)); player.prepare();
+                  player.setMediaItem(MediaItem.fromUri(channel.u));
+                  player.prepare();
                   long savedPos = getSharedPreferences("resume_prefs", MODE_PRIVATE).getLong(channel.u, 0);
                   if (savedPos > 0 && !currentMode.equals("live")) player.seekTo(savedPos);
-                  player.play(); txtTitle.setText(channel.n); txtFullChannelName.setText(channel.n);
-                  Glide.with(this).load(channel.l).placeholder(R.drawable.app_logo).into(fullChannelLogo);
-                  updateFavoriteIconUI(); if (isDoubleClick || !currentMode.equals("live")) toggleFullScreenMode(true);
+                  player.play();
+                  txtTitle.setText(channel.n); tFullChName.setText(channel.n);
+                  Glide.with(this).load(channel.l).into(fullChannelLogo);
+                  updateFavoriteIconUI();
+                  if (isDoubleClick || !currentMode.equals("live")) toggleFullScreenMode(true);
               }
 
               private void switchDisplayMode(String mode) {
                   currentMode = mode; historyStack.clear();
                   LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) rvItems.getLayoutParams();
-                  if (mode.equals("live")) { leftSideContainer.setVisibility(View.VISIBLE); params.weight = 0.55f; rvItems.setLayoutManager(new LinearLayoutManager(this)); }
-                  else { leftSideContainer.setVisibility(View.GONE); params.weight = 0.80f; rvItems.setLayoutManager(new GridLayoutManager(this, 4)); }
+                  if (mode.equals("live")) {
+                      leftSideContainer.setVisibility(View.VISIBLE); params.weight = 0.55f;
+                      rvItems.setLayoutManager(new LinearLayoutManager(this));
+                  } else {
+                      leftSideContainer.setVisibility(View.GONE); params.weight = 0.80f;
+                      rvItems.setLayoutManager(new GridLayoutManager(this, 4));
+                  }
                   rvItems.setLayoutParams(params);
-                  if (mode.equals("fav")) { currentItems = new ArrayList<>(favoriteList); rvGroups.setVisibility(View.GONE); rvItems.setAdapter(new ItemAdapter(currentItems)); return; }
+                  if (mode.equals("fav")) {
+                      currentItems = new ArrayList<>(favoriteList);
+                      rvGroups.setVisibility(View.GONE);
+                      rvItems.setAdapter(new ItemAdapter(currentItems));
+                      return;
+                  }
                   rvGroups.setVisibility(View.VISIBLE);
                   Map<String, List<Channel>> targetMap = mode.equals("movie") ? movieData : (mode.equals("series") ? seriesData : liveData);
-                  List<String> groups = new ArrayList<>(targetMap.keySet()); rvGroups.setAdapter(new GroupAdapter(groups));
+                  List<String> groups = new ArrayList<>(targetMap.keySet());
+                  rvGroups.setAdapter(new GroupAdapter(groups));
                   if (!groups.isEmpty()) { currentCategory = groups.get(0); renderGallery("root"); }
               }
 
               private void renderGallery(String pid) {
                   currentParentId = pid; List<Channel> filtered = new ArrayList<>();
-                  for (Channel c : database) if (determineType(c).equals(currentMode) && c.g.equals(currentCategory) && c.pid.equals(pid)) filtered.add(c);
+                  for (Channel c : database) {
+                      if (determineType(c).equals(currentMode) && c.g.equals(currentCategory) && c.pid.equals(pid)) filtered.add(c);
+                  }
                   currentItems = filtered; rvItems.setAdapter(new ItemAdapter(currentItems));
+                  rvItems.postDelayed(() -> { if(rvItems.getChildCount() > 0) rvItems.getChildAt(0).requestFocus(); }, 200);
               }
 
+              // دالة التميز البرمجية الذكية (Smart Categorization)
               private String determineType(Channel c) {
-                  String group = c.g.toLowerCase(); if ("1".equals(c.isF)) return "series";
-                  if (group.contains("movie") || group.contains("أفلام")) return "movie";
-                  if (group.contains("series") || group.contains("مسلسل")) return "series";
+                  if ("1".equals(c.isF)) return "series";
+                  String g = (c.g != null) ? c.g.toLowerCase() : "";
+                  String u = (c.u != null) ? c.u.toLowerCase() : "";
+                  if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام") || u.contains("/movie/")) return "movie";
+                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات") || u.contains("/series/")) return "series";
                   return "live";
               }
 
-              private void fetchM3uData() { String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u"; Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, response -> { parseM3u(response); switchDisplayMode("live"); }, null)); }
+              private void fetchM3uData() {
+                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
+                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, response -> {
+                      parseM3u(response); switchDisplayMode("live");
+                  }, null));
+              }
 
               private void parseM3u(String data) {
                   database.clear(); liveData.clear(); movieData.clear(); seriesData.clear();
                   String[] lines = data.split("\n"); Channel current = null;
                   for (String line : lines) {
                       if (line.contains("#EXTINF:")) {
-                          current = new Channel(); current.n = line.split(",").length > 1 ? line.split(",")[1].trim() : "Unknown";
-                          current.g = line.contains("group-title=\"") ? line.split("group-title=\"")[1].split("\"")[0] : "General";
+                          current = new Channel();
+                          current.n = line.split(",").length > 1 ? line.split(",")[1].trim() : "Unknown";
+                          current.g = line.contains("group-title=\"") ? line.split("group-title=\"")[1].split("\"")[0] : "عام";
                           current.l = line.contains("tvg-logo=\"") ? line.split("tvg-logo=\"")[1].split("\"")[0] : "";
                           current.id = line.contains("tvg-id=\"") ? line.split("tvg-id=\"")[1].split("\"")[0] : "";
                           current.pid = line.contains("parent-id=\"") ? line.split("parent-id=\"")[1].split("\"")[0] : "root";
                           current.isF = line.contains("is-folder=\"") ? line.split("is-folder=\"")[1].split("\"")[0] : "0";
                       } else if (line.trim().startsWith("http") && current != null) {
-                          current.u = line.trim(); database.add(current); String type = determineType(current);
+                          current.u = line.trim(); database.add(current);
+                          String type = determineType(current);
                           Map<String, List<Channel>> map = type.equals("movie") ? movieData : (type.equals("series") ? seriesData : liveData);
-                          if (!map.containsKey(current.g)) map.put(current.g, new ArrayList<>()); map.get(current.g).add(current); current = null;
+                          if (!map.containsKey(current.g)) map.put(current.g, new ArrayList<>());
+                          map.get(current.g).add(current); current = null;
                       }
                   }
               }
 
               private void saveCurrentPosition() { if (currentChannel != null && !currentMode.equals("live")) getSharedPreferences("resume_prefs", MODE_PRIVATE).edit().putLong(currentChannel.u, player.getCurrentPosition()).apply(); }
-              private void loadFavoritesFromPrefs() { String json = getSharedPreferences("app_prefs", MODE_PRIVATE).getString("favs", "[]"); favoriteList = new Gson().fromJson(json, new TypeToken<List<Channel>>(){}.getType()); if (favoriteList == null) favoriteList = new ArrayList<>(); }
-
-              private void toggleFavorite() {
-                  if (currentChannel == null) return; int foundAt = -1;
-                  for (int i = 0; i < favoriteList.size(); i++) if (favoriteList.get(i).u.equals(currentChannel.u)) foundAt = i;
-                  if (foundAt != -1) favoriteList.remove(foundAt); else favoriteList.add(currentChannel);
-                  getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putString("favs", new Gson().toJson(favoriteList)).apply(); updateFavoriteIconUI();
+              private void loadFavoritesFromPrefs() {
+                  String json = getSharedPreferences("app_prefs", MODE_PRIVATE).getString("favs", "[]");
+                  favoriteList = new Gson().fromJson(json, new TypeToken<List<Channel>>(){}.getType());
+                  if (favoriteList == null) favoriteList = new ArrayList<>();
               }
-
+              private void toggleFavorite() {
+                  if (currentChannel == null) return;
+                  int foundAt = -1; for (int i = 0; i < favoriteList.size(); i++) if (favoriteList.get(i).u.equals(currentChannel.u)) foundAt = i;
+                  if (foundAt != -1) favoriteList.remove(foundAt); else favoriteList.add(currentChannel);
+                  getSharedPreferences("app_prefs", MODE_PRIVATE).edit().putString("favs", new Gson().toJson(favoriteList)).apply();
+                  updateFavoriteIconUI();
+              }
               private void updateFavoriteIconUI() {
                   boolean isFav = false; if (currentChannel != null) for (Channel f : favoriteList) if (f.u.equals(currentChannel.u)) isFav = true;
                   fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
               }
-
               private void showOverlayControls() { overlayFull.setVisibility(View.VISIBLE); vodControls.setVisibility(currentMode.equals("live") ? View.GONE : View.VISIBLE); handler.removeCallbacks(hideOverlayRunnable); handler.postDelayed(hideOverlayRunnable, 5000); }
               private Runnable hideOverlayRunnable = () -> overlayFull.setVisibility(View.GONE);
-
               private void updateProgressBarTask() {
                   if (player != null && !currentMode.equals("live")) {
                       long duration = player.getDuration(), position = player.getCurrentPosition();
@@ -425,33 +468,45 @@ jobs:
                   }
                   handler.postDelayed(this::updateProgressBarTask, 1000);
               }
-
-              private String formatTime(long ms) { long s = (ms / 1000) % 60, m = (ms / 60000) % 60, h = (ms / 3600000); return h > 0 ? String.format("%02d:%02d:%02d", h, m, s) : String.format("%02d:%02d", m, s); }
-              private void hideSystemUI() { getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN); getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_FULLSCREEN); }
-              private void showExitConfirmationDialog() { new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("Exit").setMessage("Do you want to close Rabie Pro?").setPositiveButton("Yes", (dialog, which) -> finish()).setNegativeButton("No", null).show(); }
+              private String formatTime(long ms) { long s=(ms/1000)%60, m=(ms/60000)%60, h=(ms/3600000); return h>0?String.format("%02d:%02d:%02d",h,m,s):String.format("%02d:%02d",m,s); }
+              private void hideSystemUI() { getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_FULLSCREEN); }
+              private void showExitConfirmationDialog() { new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("خروج").setMessage("هل تريد إغلاق تطبيق Rabie Pro؟").setPositiveButton("نعم", (dialog, which) -> finish()).setNegativeButton("لا", null).show(); }
               private void playNextItem() { int index = currentItems.indexOf(currentChannel); if (index != -1 && index < currentItems.size() - 1) playChannel(currentItems.get(index + 1), index + 1, true); }
               private void playPreviousItem() { int index = currentItems.indexOf(currentChannel); if (index > 0) playChannel(currentItems.get(index - 1), index - 1, true); }
-
               @Override protected void onPause() { super.onPause(); if (player != null) player.stop(); }
               @Override protected void onDestroy() { super.onDestroy(); if (player != null) player.release(); handler.removeCallbacksAndMessages(null); }
 
               class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.ViewHolder> {
                   List<String> groups; GroupAdapter(List<String> groups) { this.groups = groups; }
-                  public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false)); }
-                  public void onBindViewHolder(ViewHolder holder, int position) { holder.name.setText(groups.get(position)); holder.itemView.setOnClickListener(v -> { currentCategory = groups.get(position); renderGallery("root"); }); }
-                  public int getItemCount() { return groups.size(); }
+                  @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_channel, parent, false)); }
+                  @Override public void onBindViewHolder(ViewHolder holder, int position) {
+                      holder.name.setText(groups.get(position));
+                      holder.itemView.setFocusable(true);
+                      holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
+                      holder.itemView.setOnClickListener(v -> { currentCategory = groups.get(position); renderGallery("root"); });
+                  }
+                  @Override public int getItemCount() { return groups.size(); }
                   class ViewHolder extends RecyclerView.ViewHolder { TextView name; ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); } }
               }
 
               class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder> {
                   List<Channel> list; ItemAdapter(List<Channel> list) { this.list = list; }
-                  public int getItemViewType(int position) { return currentMode.equals("live") ? 0 : 1; }
-                  public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) { return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(viewType == 0 ? R.layout.item_channel : R.layout.item_card, parent, false)); }
-                  public void onBindViewHolder(ViewHolder holder, int position) {
-                      Channel c = list.get(position); holder.name.setText(c.n); Glide.with(holder.itemView).load(c.l).placeholder(R.drawable.app_logo).into(holder.img);
-                      holder.itemView.setOnClickListener(v -> { if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); } else { long now = System.currentTimeMillis(); boolean isDouble = (now - lastClickTime < 500); lastClickTime = now; playChannel(c, position, isDouble); } });
+                  @Override public int getItemViewType(int position) { return currentMode.equals("live") ? 0 : 1; }
+                  @Override public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+                      int layout = (viewType == 0) ? R.layout.item_channel : R.layout.item_card;
+                      return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(layout, parent, false));
                   }
-                  public int getItemCount() { return list.size(); }
+                  @Override public void onBindViewHolder(ViewHolder holder, int position) {
+                      Channel c = list.get(position); holder.name.setText(c.n);
+                      Glide.with(holder.itemView).load(c.l).into(holder.img);
+                      holder.itemView.setFocusable(true);
+                      holder.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
+                      holder.itemView.setOnClickListener(v -> {
+                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); }
+                          else { long now = System.currentTimeMillis(); boolean isDouble = (now - lastClickTime < 500); lastClickTime = now; playChannel(c, position, isDouble); }
+                      });
+                  }
+                  @Override public int getItemCount() { return list.size(); }
                   class ViewHolder extends RecyclerView.ViewHolder { TextView name; ImageView img; ViewHolder(View v) { super(v); name = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
               }
           }
