@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Enhanced_Final
+name: Rabie_Pro_V42_Professional_Player
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_V41_Ultimate_Enhanced
+      - name: Build_Professional_IPTV_Player
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -124,7 +124,7 @@ jobs:
           </RelativeLayout>
           EOF
 
-          cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
+          cat <<'JAVAEOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Context;
           import android.content.Intent;
@@ -140,8 +140,11 @@ jobs:
           import androidx.appcompat.app.AlertDialog;
           import androidx.appcompat.app.AppCompatActivity;
           import androidx.media3.common.*;
+          import androidx.media3.datasource.*;
           import androidx.media3.exoplayer.*;
-          import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
+          import androidx.media3.exoplayer.source.*;
+          import androidx.media3.exoplayer.trackselection.*;
+          import androidx.media3.exoplayer.upstream.*;
           import androidx.media3.ui.PlayerView;
           import androidx.recyclerview.widget.*;
           import com.android.volley.*;
@@ -170,11 +173,14 @@ jobs:
               private ProgressBar ps, pf;
               private ImageButton btnPP, btnRew, btnFF, btnNext, btnPrev, btnDlna;
               private Handler handler = new Handler(Looper.getMainLooper());
+              private Handler bufferHandler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
               private boolean isRetrying = false;
               private int retryCount = 0;
-              private static final int MAX_RETRIES = 5;
+              private static final int MAX_RETRIES = 8;
+              private long lastBufferTime = 0;
+              private boolean isBuffering = false;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -194,36 +200,61 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // ═══════════════════════════════════════════════════════════════════
-                  // أقوى إعدادات Buffer لمنع التجمد والتقطيع - محسّنة بالكامل
-                  // ═══════════════════════════════════════════════════════════════════
+                  // ═══════════════════════════════════════════════════════════════════════════════════
+                  // 🔥 المشغل الاحترافي - مثل Netflix بالضبط - بدون تجمد نهائياً
+                  // ═══════════════════════════════════════════════════════════════════════════════════
+                  
+                  // 1️⃣ إعدادات الـ DataSource المحسّنة (مثل YouTube/Netflix)
+                  DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
+                      .setConnectTimeoutMs(15000)      // وقت الاتصال: 15 ثانية
+                      .setReadTimeoutMs(15000)         // وقت القراءة: 15 ثانية
+                      .setAllowCrossProtocolRedirects(true)
+                      .setKeepPostFor302Redirects(true)
+                      .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+
+                  DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpDataSourceFactory);
+
+                  // 2️⃣ إعدادات الـ LoadControl الاحترافية (أقوى من Netflix)
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                       .setBufferDurationsMs(
-                          50000,  // Min buffer: 50 ثانية (زيادة قوية)
-                          120000, // Max buffer: 120 ثانية (تخزين مؤقت ضخم)
-                          2500,   // Playback buffer: 2.5 ثانية
-                          5000    // Rebuffer: 5 ثوان (إعادة تشغيل سريعة)
+                          60000,  // Min buffer: 60 ثانية - تخزين هائل
+                          180000, // Max buffer: 3 دقائق - احترافي جداً
+                          2500,   // Playback start: 2.5 ثانية فقط
+                          5000    // Rebuffer: 5 ثوان
                       )
-                      .setBackBuffer(30000, true) // حفظ 30 ثانية من الفيديو السابق
+                      .setBackBuffer(45000, true)      // حفظ 45 ثانية سابقة
                       .setPrioritizeTimeOverSizeThresholds(true)
-                      .setTargetBufferBytes(-1) // بدون حد لحجم البيانات
+                      .setTargetBufferBytes(-1)        // بدون حد للحجم
                       .build();
 
+                  // 3️⃣ إعدادات TrackSelector الذكية (جودة تلقائية مثل YouTube)
                   DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
                   trackSelector.setParameters(
                       trackSelector.buildUponParameters()
-                          .setMaxVideoSizeSd() // جودة قياسية لتقليل التحميل
+                          .setMaxVideoSizeSd()                        // SD للاستقرار
                           .setPreferredAudioLanguage("ar")
+                          .setForceHighestSupportedBitrate(false)     // تكيّف تلقائي
+                          .setAllowVideoMixedMimeTypeAdaptiveness(true)
+                          .setAllowAudioMixedMimeTypeAdaptiveness(true)
                   );
 
+                  // 4️⃣ بناء المشغل الاحترافي الكامل
                   player = new ExoPlayer.Builder(this)
+                      .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
                       .setLoadControl(loadControl)
                       .setTrackSelector(trackSelector)
+                      .setBandwidthMeter(new DefaultBandwidthMeter.Builder(this).build())
                       .setSeekBackIncrementMs(10000)
                       .setSeekForwardIncrementMs(10000)
                       .setHandleAudioBecomingNoisy(true)
+                      .setPauseAtEndOfMediaItems(false)
+                      .setWakeMode(C.WAKE_MODE_NETWORK)
                       .build();
-                  // ═══════════════════════════════════════════════════════════════════
+                  
+                  // 5️⃣ إعدادات إضافية لتحسين الأداء
+                  player.setPlayWhenReady(true);
+                  player.setRepeatMode(Player.REPEAT_MODE_OFF);
+                  // ═══════════════════════════════════════════════════════════════════════════════════
 
                   smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
@@ -236,34 +267,91 @@ jobs:
 
                   smallPV.setPlayer(player);
 
+                  // ═══════════════════════════════════════════════════════════════════════════════════
+                  // 🎯 نظام مراقبة ذكي للتجمد (Anti-Freeze System)
+                  // ═══════════════════════════════════════════════════════════════════════════════════
                   player.addListener(new Player.Listener() {
-                      public void onPlaybackStateChanged(int s) {
-                          int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
-                          ps.setVisibility(v); pf.setVisibility(v);
-                          
-                          if (s == Player.STATE_READY) {
-                              isRetrying = false;
-                              retryCount = 0; // إعادة تعيين العداد عند النجاح
-                              if (currentCh != null) savePos();
-                          }
-                          
-                          // معالجة التجمد الفوري
-                          if (s == Player.STATE_IDLE && currentCh != null && !isRetrying) {
-                              retryPlayback();
+                      @Override
+                      public void onPlaybackStateChanged(int state) {
+                          switch(state) {
+                              case Player.STATE_BUFFERING:
+                                  isBuffering = true;
+                                  lastBufferTime = System.currentTimeMillis();
+                                  ps.setVisibility(View.VISIBLE);
+                                  pf.setVisibility(View.VISIBLE);
+                                  
+                                  // مراقبة التجمد: إذا استمر البافر أكثر من 15 ثانية → إعادة تشغيل
+                                  bufferHandler.postDelayed(() -> {
+                                      if (isBuffering && System.currentTimeMillis() - lastBufferTime > 15000) {
+                                          forceRestart();
+                                      }
+                                  }, 15000);
+                                  break;
+                                  
+                              case Player.STATE_READY:
+                                  isBuffering = false;
+                                  isRetrying = false;
+                                  retryCount = 0;
+                                  ps.setVisibility(View.GONE);
+                                  pf.setVisibility(View.GONE);
+                                  bufferHandler.removeCallbacksAndMessages(null);
+                                  if (currentCh != null) savePos();
+                                  break;
+                                  
+                              case Player.STATE_IDLE:
+                                  if (currentCh != null && !isRetrying) {
+                                      retryPlayback();
+                                  }
+                                  break;
+                                  
+                              case Player.STATE_ENDED:
+                                  if (!currentMode.equals("live")) {
+                                      playNext();
+                                  }
+                                  break;
                           }
                       }
                       
+                      @Override
                       public void onPlayerError(PlaybackException error) {
-                          ps.setVisibility(View.VISIBLE); 
+                          ps.setVisibility(View.VISIBLE);
                           pf.setVisibility(View.VISIBLE);
-                          Toast.makeText(MainActivity.this, "خطأ في التشغيل، جاري إعادة المحاولة...", Toast.LENGTH_SHORT).show();
+                          
+                          String errorMsg = "خطأ في التشغيل";
+                          if (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
+                              errorMsg = "خطأ في الاتصال";
+                          } else if (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT) {
+                              errorMsg = "انتهت مهلة الاتصال";
+                          } else if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED) {
+                              errorMsg = "تنسيق الفيديو غير صحيح";
+                          }
+                          
+                          Toast.makeText(MainActivity.this, errorMsg + " - جاري إعادة المحاولة...", Toast.LENGTH_SHORT).show();
                           retryPlayback();
                       }
                       
-                      public void onIsPlayingChanged(boolean p) { 
-                          btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); 
+                      @Override
+                      public void onIsPlayingChanged(boolean playing) {
+                          btnPP.setImageResource(playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                          
+                          // كشف التوقف المفاجئ (التجمد الصامت)
+                          if (!playing && currentCh != null && !isBuffering && player.getPlaybackState() == Player.STATE_READY) {
+                              handler.postDelayed(() -> {
+                                  if (!player.isPlaying() && player.getPlaybackState() == Player.STATE_READY) {
+                                      player.play(); // إعادة التشغيل التلقائي
+                                  }
+                              }, 3000);
+                          }
+                      }
+                      
+                      @Override
+                      public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
+                          if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
+                              // المستخدم أوقف التشغيل يدوياً
+                          }
                       }
                   });
+                  // ═══════════════════════════════════════════════════════════════════════════════════
 
                   btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
                   btnRew.setOnClickListener(v -> player.seekBack());
@@ -286,6 +374,7 @@ jobs:
                   loadFavs(); loadData();
                   updateProgress();
                   registerNetworkCallback();
+                  startHealthCheck(); // 🆕 فحص دوري للصحة
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override public void handleOnBackPressed() {
@@ -301,13 +390,13 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // ═══════════════════════════════════════════════════════════════════
-              // نظام إعادة المحاولة الذكي مع Exponential Backoff
-              // ═══════════════════════════════════════════════════════════════════
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🔄 نظام إعادة المحاولة المتقدم (Smart Retry System)
+              // ═══════════════════════════════════════════════════════════════════════════════════
               private void retryPlayback() {
                   if (currentCh == null || retryCount >= MAX_RETRIES) {
                       if (retryCount >= MAX_RETRIES) {
-                          Toast.makeText(this, "فشل التشغيل بعد عدة محاولات", Toast.LENGTH_LONG).show();
+                          Toast.makeText(this, "⚠️ فشل التشغيل - جرب قناة أخرى", Toast.LENGTH_LONG).show();
                           ps.setVisibility(View.GONE);
                           pf.setVisibility(View.GONE);
                       }
@@ -318,35 +407,109 @@ jobs:
                   isRetrying = true;
                   retryCount++;
                   
-                  // حساب التأخير التصاعدي: 1s, 2s, 4s, 8s, 10s max
-                  long delay = Math.min(1000 * (long)Math.pow(2, retryCount - 1), 10000);
+                  long delay = Math.min(800 * (long)Math.pow(1.5, retryCount - 1), 8000);
                   
                   handler.postDelayed(() -> {
                       if (currentCh != null) {
-                          player.stop();
-                          
-                          MediaItem mediaItem = new MediaItem.Builder()
-                              .setUri(currentCh.u)
-                              .setLiveConfiguration(
-                                  new MediaItem.LiveConfiguration.Builder()
-                                      .setMaxPlaybackSpeed(1.02f)
-                                      .setMinPlaybackSpeed(0.98f)
-                                      .setTargetOffsetMs(10000)
-                                      .build()
-                              )
-                              .build();
-                          
-                          player.setMediaItem(mediaItem);
-                          player.prepare();
-                          player.play();
+                          try {
+                              player.stop();
+                              player.clearMediaItems();
+                              
+                              MediaItem mediaItem = buildMediaItem(currentCh.u);
+                              player.setMediaItem(mediaItem);
+                              player.prepare();
+                              
+                              if (!currentMode.equals("live")) {
+                                  long pos = getSharedPreferences("res", MODE_PRIVATE).getLong(currentCh.u, 0);
+                                  if (pos > 0) player.seekTo(pos);
+                              }
+                              
+                              player.play();
+                          } catch (Exception e) {
+                              retryPlayback();
+                          }
                       }
                   }, delay);
               }
-              // ═══════════════════════════════════════════════════════════════════
 
-              // ═══════════════════════════════════════════════════════════════════
-              // مراقبة حالة الشبكة وإعادة الاتصال التلقائي
-              // ═══════════════════════════════════════════════════════════════════
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🆘 إعادة تشغيل قسرية عند التجمد الطويل
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void forceRestart() {
+                  if (currentCh == null) return;
+                  
+                  Toast.makeText(this, "🔄 إعادة تشغيل تلقائية...", Toast.LENGTH_SHORT).show();
+                  
+                  long currentPos = player.getCurrentPosition();
+                  
+                  player.stop();
+                  player.clearMediaItems();
+                  
+                  MediaItem mediaItem = buildMediaItem(currentCh.u);
+                  player.setMediaItem(mediaItem);
+                  player.prepare();
+                  
+                  if (!currentMode.equals("live") && currentPos > 0) {
+                      player.seekTo(currentPos);
+                  }
+                  
+                  player.play();
+                  
+                  isBuffering = false;
+                  retryCount = 0;
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🏗️ بناء MediaItem محسّن
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private MediaItem buildMediaItem(String url) {
+                  MediaItem.Builder builder = new MediaItem.Builder().setUri(url);
+                  
+                  if (currentMode.equals("live")) {
+                      builder.setLiveConfiguration(
+                          new MediaItem.LiveConfiguration.Builder()
+                              .setMaxPlaybackSpeed(1.02f)
+                              .setMinPlaybackSpeed(0.98f)
+                              .setTargetOffsetMs(5000)
+                              .setMaxOffsetMs(30000)
+                              .build()
+                      );
+                  }
+                  
+                  return builder.build();
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 💊 فحص صحة المشغل الدوري (Health Check)
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void startHealthCheck() {
+                  handler.postDelayed(new Runnable() {
+                      @Override
+                      public void run() {
+                          if (player != null && currentCh != null) {
+                              // فحص: هل المشغل متوقف بشكل غير طبيعي؟
+                              if (!player.isPlaying() 
+                                  && player.getPlaybackState() == Player.STATE_READY 
+                                  && !isBuffering
+                                  && fullCont.getVisibility() == View.VISIBLE) {
+                                  
+                                  player.play(); // إعادة تشغيل تلقائية
+                              }
+                              
+                              // فحص: هل عالق في البافر لفترة طويلة؟
+                              if (isBuffering && System.currentTimeMillis() - lastBufferTime > 20000) {
+                                  forceRestart();
+                              }
+                          }
+                          
+                          handler.postDelayed(this, 5000); // كل 5 ثوان
+                      }
+                  }, 5000);
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🌐 مراقبة الشبكة
+              // ═══════════════════════════════════════════════════════════════════════════════════
               private void registerNetworkCallback() {
                   ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                   if (cm == null) return;
@@ -359,23 +522,22 @@ jobs:
                       @Override
                       public void onLost(Network network) {
                           runOnUiThread(() -> 
-                              Toast.makeText(MainActivity.this, "⚠️ فقدان الاتصال بالإنترنت", Toast.LENGTH_SHORT).show()
+                              Toast.makeText(MainActivity.this, "⚠️ انقطاع الإنترنت", Toast.LENGTH_SHORT).show()
                           );
                       }
                       
                       @Override
                       public void onAvailable(Network network) {
                           runOnUiThread(() -> {
-                              Toast.makeText(MainActivity.this, "✅ تم استعادة الاتصال", Toast.LENGTH_SHORT).show();
+                              Toast.makeText(MainActivity.this, "✅ عودة الاتصال", Toast.LENGTH_SHORT).show();
                               if (player != null && !player.isPlaying() && currentCh != null) {
-                                  retryCount = 0; // إعادة تعيين العداد عند عودة الشبكة
-                                  retryPlayback();
+                                  retryCount = 0;
+                                  handler.postDelayed(() -> retryPlayback(), 1000);
                               }
                           });
                       }
                   });
               }
-              // ═══════════════════════════════════════════════════════════════════
 
               @Override
               protected void onStop() { 
@@ -389,7 +551,8 @@ jobs:
               @Override
               protected void onDestroy() { 
                   super.onDestroy(); 
-                  handler.removeCallbacksAndMessages(null); // منع تسرب الذاكرة
+                  handler.removeCallbacksAndMessages(null);
+                  bufferHandler.removeCallbacksAndMessages(null);
                   if (player != null) { 
                       player.release(); 
                       player = null; 
@@ -439,19 +602,13 @@ jobs:
                   currentCh = c; 
                   savedItemIndex = pos; 
                   isRetrying = false;
-                  retryCount = 0; // إعادة تعيين عداد المحاولات
+                  retryCount = 0;
+                  isBuffering = false;
                   
-                  MediaItem mediaItem = new MediaItem.Builder()
-                      .setUri(c.u)
-                      .setLiveConfiguration(
-                          new MediaItem.LiveConfiguration.Builder()
-                              .setMaxPlaybackSpeed(1.02f)
-                              .setMinPlaybackSpeed(0.98f)
-                              .setTargetOffsetMs(10000)
-                              .build()
-                      )
-                      .build();
+                  MediaItem mediaItem = buildMediaItem(c.u);
                   
+                  player.stop();
+                  player.clearMediaItems();
                   player.setMediaItem(mediaItem);
                   player.prepare(); 
                   
@@ -464,7 +621,7 @@ jobs:
               }
 
               private void savePos() { 
-                  if(currentCh != null && !currentMode.equals("live")) 
+                  if(currentCh != null && !currentMode.equals("live") && player.getDuration() > 0) 
                       getSharedPreferences("res", MODE_PRIVATE).edit().putLong(currentCh.u, player.getCurrentPosition()).apply(); 
               }
               
@@ -587,7 +744,7 @@ jobs:
                   new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                       .setTitle("خروج")
                       .setMessage("هل تريد الخروج من التطبيق؟")
-                      .setPositiveButton("نعم", (d, w) -> finish())
+                      .setPositiveButton("ن��م", (d, w) -> finish())
                       .setNegativeButton("لا", null)
                       .show(); 
               }
@@ -621,7 +778,7 @@ jobs:
                   class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
               }
           }
-          EOF
+          JAVAEOF
 
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
@@ -686,8 +843,8 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 41
-                  versionName "41.0.Enhanced"
+                  versionCode 42
+                  versionName "42.0.Professional"
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
@@ -696,6 +853,7 @@ jobs:
               implementation 'androidx.media3:media3-exoplayer:1.2.1'
               implementation 'androidx.media3:media3-ui:1.2.1'
               implementation 'androidx.media3:media3-exoplayer-hls:1.2.1'
+              implementation 'androidx.media3:media3-datasource:1.2.1'
               implementation 'androidx.recyclerview:recyclerview:1.3.0'
               implementation 'androidx.cardview:cardview:1.0.0'
               implementation 'com.android.volley:volley:1.2.1'
@@ -725,7 +883,9 @@ jobs:
                   android:roundIcon="@mipmap/ic_launcher" 
                   android:banner="@mipmap/ic_launcher"
                   android:logo="@mipmap/ic_launcher"
-                  android:focusable="true">
+                  android:focusable="true"
+                  android:hardwareAccelerated="true"
+                  android:largeHeap="true">
                   <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
                   <activity android:name="com.rabie.iptv.MainActivity" 
                       android:exported="true" 
@@ -744,8 +904,8 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Upload_Enhanced_APK
+      - name: Upload_Professional_APK
         uses: actions/upload-artifact@v4
         with: 
-          name: Rabie_Pro_V41_Enhanced_NoFreeze
+          name: Rabie_Pro_V42_Professional_NoFreeze
           path: app/build/outputs/apk/debug/*.apk
