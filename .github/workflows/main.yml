@@ -1,4 +1,4 @@
-name: Rabie_Pro_V42_Professional_Player
+name: Rabie_Pro_V43_Dual_Players
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Professional_IPTV_Player
+      - name: Build_With_VLC_And_ExoPlayer
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
@@ -73,13 +73,17 @@ jobs:
                       <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="42dp" android:text="الأفلام" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
                       <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="42dp" android:text="المسلسلات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
                       <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
+                      <Button android:id="@+id/btn_settings" android:layout_width="55dp" android:layout_height="42dp" android:text="⚙️" android:textColor="#EEE" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:layout_marginLeft="8dp"/>
                   </LinearLayout>
 
                   <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
                       <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
-                              <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
-                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                              <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                                  <androidx.media3.ui.PlayerView android:id="@+id/small_player_exo" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
+                                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/small_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                                  <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                              </FrameLayout>
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
                               <TextView android:id="@+id/txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اختر محتوى" android:textColor="#ff9100" android:textSize="20sp" android:textStyle="bold" android:maxLines="1"/>
@@ -92,7 +96,9 @@ jobs:
               </LinearLayout>
 
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
-                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
+                  <androidx.media3.ui.PlayerView android:id="@+id/full_player_exo" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
+                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/full_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                  
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
                       <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
                           <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
@@ -100,6 +106,7 @@ jobs:
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
                               <TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/>
+                              <TextView android:id="@+id/txt_player_type" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#AAA" android:textSize="12sp" android:layout_marginTop="3dp"/>
                           </LinearLayout>
                           <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
                           <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
@@ -124,10 +131,127 @@ jobs:
           </RelativeLayout>
           EOF
 
+          cat <<EOF > app/src/main/res/layout/dialog_settings.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="600dp"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:padding="25dp"
+              android:background="@drawable/tab_button_style">
+              
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="⚙️ الإعدادات"
+                  android:textColor="#ff9100"
+                  android:textSize="24sp"
+                  android:textStyle="bold"
+                  android:gravity="center"
+                  android:layout_marginBottom="25dp"/>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"
+                  android:padding="15dp"
+                  android:background="@drawable/focus_highlight"
+                  android:layout_marginBottom="15dp">
+                  
+                  <LinearLayout
+                      android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:orientation="vertical">
+                      
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="🎬 استخدام مشغل VLC"
+                          android:textColor="#FFF"
+                          android:textSize="18sp"
+                          android:textStyle="bold"/>
+                      
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="مشغل قوي بدون تجمد (يُنصح به)"
+                          android:textColor="#AAA"
+                          android:textSize="13sp"
+                          android:layout_marginTop="5dp"/>
+                  </LinearLayout>
+                  
+                  <CheckBox
+                      android:id="@+id/cb_use_vlc"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:buttonTint="#ff9100"
+                      android:scaleX="1.3"
+                      android:scaleY="1.3"/>
+              </LinearLayout>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"
+                  android:padding="15dp"
+                  android:background="@drawable/focus_highlight"
+                  android:layout_marginBottom="15dp">
+                  
+                  <LinearLayout
+                      android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:orientation="vertical">
+                      
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="🔇 تشغيل صامت عند بدء التطبيق"
+                          android:textColor="#FFF"
+                          android:textSize="18sp"
+                          android:textStyle="bold"/>
+                      
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="منع التشغيل التلقائي في الخلفية"
+                          android:textColor="#AAA"
+                          android:textSize="13sp"
+                          android:layout_marginTop="5dp"/>
+                  </LinearLayout>
+                  
+                  <CheckBox
+                      android:id="@+id/cb_prevent_bg"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:buttonTint="#ff9100"
+                      android:scaleX="1.3"
+                      android:scaleY="1.3"
+                      android:checked="true"/>
+              </LinearLayout>
+
+              <Button
+                  android:id="@+id/btn_save_settings"
+                  android:layout_width="match_parent"
+                  android:layout_height="55dp"
+                  android:text="✅ حفظ الإعدادات"
+                  android:textColor="#FFF"
+                  android:textSize="16sp"
+                  android:textStyle="bold"
+                  android:background="@drawable/round_btn_orange"
+                  android:layout_marginTop="10dp"/>
+          </LinearLayout>
+          EOF
+
           cat <<'JAVAEOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
+          import android.app.Dialog;
           import android.content.Context;
           import android.content.Intent;
+          import android.content.SharedPreferences;
           import android.net.ConnectivityManager;
           import android.net.Network;
           import android.net.NetworkCapabilities;
@@ -144,7 +268,6 @@ jobs:
           import androidx.media3.exoplayer.*;
           import androidx.media3.exoplayer.source.*;
           import androidx.media3.exoplayer.trackselection.*;
-          import androidx.media3.exoplayer.upstream.*;
           import androidx.media3.ui.PlayerView;
           import androidx.recyclerview.widget.*;
           import com.android.volley.*;
@@ -155,9 +278,19 @@ jobs:
           import java.util.*;
           import com.google.android.gms.cast.framework.*;
           import androidx.mediarouter.app.MediaRouteButton;
+          import org.videolan.libvlc.*;
+          import org.videolan.libvlc.util.VLCVideoLayout;
 
           public class MainActivity extends AppCompatActivity {
-              private ExoPlayer player;
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🎬 نظام المشغلات المزدوج: ExoPlayer + VLC
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private ExoPlayer exoPlayer;
+              private LibVLC libVLC;
+              private org.videolan.libvlc.MediaPlayer vlcPlayer;
+              private boolean useVLC = false;
+              private boolean preventBackground = true;
+              
               private List<Ch> database = new ArrayList<>();
               private Map<String, List<Ch>> live = new LinkedHashMap<>(), movie = new LinkedHashMap<>(), series = new LinkedHashMap<>();
               private List<Ch> favList = new ArrayList<>(), currentItems = new ArrayList<>();
@@ -165,22 +298,18 @@ jobs:
               private String currentParentId = "root", currentCat = "", currentMode = "live";
               private Ch currentCh;
               private RecyclerView rvG, rvI;
-              private TextView tTitle, tTime, tFullChName;
-              private PlayerView smallPV, fullPV;
+              private TextView tTitle, tTime, tFullChName, txtPlayerType;
+              private PlayerView smallPVExo, fullPVExo;
+              private VLCVideoLayout smallPVVlc, fullPVVlc;
               private View mainUI, fullCont, overlay, vodControls, splash, infoBar, leftSide;
               private ImageView fullChLogo, fullFavBtn;
               private SeekBar seekBar;
               private ProgressBar ps, pf;
               private ImageButton btnPP, btnRew, btnFF, btnNext, btnPrev, btnDlna;
               private Handler handler = new Handler(Looper.getMainLooper());
-              private Handler bufferHandler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private int savedItemIndex = -1;
-              private boolean isRetrying = false;
-              private int retryCount = 0;
-              private static final int MAX_RETRIES = 8;
-              private long lastBufferTime = 0;
-              private boolean isBuffering = false;
+              private SharedPreferences prefs;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -190,194 +319,72 @@ jobs:
                   setContentView(R.layout.activity_main);
                   hideSystemUI();
 
+                  prefs = getSharedPreferences("settings", MODE_PRIVATE);
+                  useVLC = prefs.getBoolean("use_vlc", false);
+                  preventBackground = prefs.getBoolean("prevent_bg", true);
+
                   MediaRouteButton mrb = findViewById(R.id.media_route_button);
                   CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb);
 
-                  splash = findViewById(R.id.splash_screen); mainUI = findViewById(R.id.main_ui_container);
-                  infoBar = findViewById(R.id.infobar_layout); leftSide = findViewById(R.id.left_side_container);
-                  fullChLogo = findViewById(R.id.full_ch_logo); tFullChName = findViewById(R.id.full_ch_name);
-                  fullFavBtn = findViewById(R.id.full_fav_btn); btnDlna = findViewById(R.id.btn_dlna);
+                  splash = findViewById(R.id.splash_screen); 
+                  mainUI = findViewById(R.id.main_ui_container);
+                  infoBar = findViewById(R.id.infobar_layout); 
+                  leftSide = findViewById(R.id.left_side_container);
+                  fullChLogo = findViewById(R.id.full_ch_logo); 
+                  tFullChName = findViewById(R.id.full_ch_name);
+                  txtPlayerType = findViewById(R.id.txt_player_type);
+                  fullFavBtn = findViewById(R.id.full_fav_btn); 
+                  btnDlna = findViewById(R.id.btn_dlna);
 
-                  handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
+                  handler.postDelayed(() -> { 
+                      splash.setVisibility(View.GONE); 
+                      mainUI.setVisibility(View.VISIBLE); 
+                  }, 2000);
 
                   // ═══════════════════════════════════════════════════════════════════════════════════
-                  // 🔥 المشغل الاحترافي - مثل Netflix بالضبط - بدون تجمد نهائياً
+                  // 🎯 تهيئة المشغلات
                   // ═══════════════════════════════════════════════════════════════════════════════════
+                  smallPVExo = findViewById(R.id.small_player_exo);
+                  fullPVExo = findViewById(R.id.full_player_exo);
+                  smallPVVlc = findViewById(R.id.small_player_vlc);
+                  fullPVVlc = findViewById(R.id.full_player_vlc);
+
+                  initExoPlayer();
+                  initVLCPlayer();
                   
-                  // 1️⃣ إعدادات الـ DataSource المحسّنة (مثل YouTube/Netflix)
-                  DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
-                      .setConnectTimeoutMs(15000)      // وقت الاتصال: 15 ثانية
-                      .setReadTimeoutMs(15000)         // وقت القراءة: 15 ثانية
-                      .setAllowCrossProtocolRedirects(true)
-                      .setKeepPostFor302Redirects(true)
-                      .setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
-
-                  DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpDataSourceFactory);
-
-                  // 2️⃣ إعدادات الـ LoadControl الاحترافية (أقوى من Netflix)
-                  DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(
-                          60000,  // Min buffer: 60 ثانية - تخزين هائل
-                          180000, // Max buffer: 3 دقائق - احترافي جداً
-                          2500,   // Playback start: 2.5 ثانية فقط
-                          5000    // Rebuffer: 5 ثوان
-                      )
-                      .setBackBuffer(45000, true)      // حفظ 45 ثانية سابقة
-                      .setPrioritizeTimeOverSizeThresholds(true)
-                      .setTargetBufferBytes(-1)        // بدون حد للحجم
-                      .build();
-
-                  // 3️⃣ إعدادات TrackSelector الذكية (جودة تلقائية مثل YouTube)
-                  DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
-                  trackSelector.setParameters(
-                      trackSelector.buildUponParameters()
-                          .setMaxVideoSizeSd()                        // SD للاستقرار
-                          .setPreferredAudioLanguage("ar")
-                          .setForceHighestSupportedBitrate(false)     // تكيّف تلقائي
-                          .setAllowVideoMixedMimeTypeAdaptiveness(true)
-                          .setAllowAudioMixedMimeTypeAdaptiveness(true)
-                  );
-
-                  // 4️⃣ بناء المشغل الاحترافي الكامل
-                  player = new ExoPlayer.Builder(this)
-                      .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
-                      .setLoadControl(loadControl)
-                      .setTrackSelector(trackSelector)
-                      .setBandwidthMeter(new DefaultBandwidthMeter.Builder(this).build())
-                      .setSeekBackIncrementMs(10000)
-                      .setSeekForwardIncrementMs(10000)
-                      .setHandleAudioBecomingNoisy(true)
-                      .setPauseAtEndOfMediaItems(false)
-                      .setWakeMode(C.WAKE_MODE_NETWORK)
-                      .build();
-                  
-                  // 5️⃣ إعدادات إضافية لتحسين الأداء
-                  player.setPlayWhenReady(true);
-                  player.setRepeatMode(Player.REPEAT_MODE_OFF);
-                  // ═══════════════════════════════════════════════════════════════════════════════════
-
-                  smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
-                  fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
-                  tTime = findViewById(R.id.txt_time); seekBar = findViewById(R.id.full_seekbar);
+                  fullCont = findViewById(R.id.full_container); 
+                  overlay = findViewById(R.id.overlay_full);
+                  tTime = findViewById(R.id.txt_time); 
+                  seekBar = findViewById(R.id.full_seekbar);
                   vodControls = findViewById(R.id.vod_controls);
-                  ps = findViewById(R.id.loading_s); pf = findViewById(R.id.loading_f);
+                  ps = findViewById(R.id.loading_s); 
+                  pf = findViewById(R.id.loading_f);
                   btnPP = findViewById(R.id.btn_play_pause);
-                  btnRew = findViewById(R.id.btn_rew); btnFF = findViewById(R.id.btn_ffwd);
-                  btnNext = findViewById(R.id.btn_next_item); btnPrev = findViewById(R.id.btn_prev_item);
+                  btnRew = findViewById(R.id.btn_rew); 
+                  btnFF = findViewById(R.id.btn_ffwd);
+                  btnNext = findViewById(R.id.btn_next_item); 
+                  btnPrev = findViewById(R.id.btn_prev_item);
 
-                  smallPV.setPlayer(player);
-
-                  // ═══════════════════════════════════════════════════════════════════════════════════
-                  // 🎯 نظام مراقبة ذكي للتجمد (Anti-Freeze System)
-                  // ═══════════════════════════════════════════════════════════════════════════════════
-                  player.addListener(new Player.Listener() {
-                      @Override
-                      public void onPlaybackStateChanged(int state) {
-                          switch(state) {
-                              case Player.STATE_BUFFERING:
-                                  isBuffering = true;
-                                  lastBufferTime = System.currentTimeMillis();
-                                  ps.setVisibility(View.VISIBLE);
-                                  pf.setVisibility(View.VISIBLE);
-                                  
-                                  // مراقبة التجمد: إذا استمر البافر أكثر من 15 ثانية → إعادة تشغيل
-                                  bufferHandler.postDelayed(() -> {
-                                      if (isBuffering && System.currentTimeMillis() - lastBufferTime > 15000) {
-                                          forceRestart();
-                                      }
-                                  }, 15000);
-                                  break;
-                                  
-                              case Player.STATE_READY:
-                                  isBuffering = false;
-                                  isRetrying = false;
-                                  retryCount = 0;
-                                  ps.setVisibility(View.GONE);
-                                  pf.setVisibility(View.GONE);
-                                  bufferHandler.removeCallbacksAndMessages(null);
-                                  if (currentCh != null) savePos();
-                                  break;
-                                  
-                              case Player.STATE_IDLE:
-                                  if (currentCh != null && !isRetrying) {
-                                      retryPlayback();
-                                  }
-                                  break;
-                                  
-                              case Player.STATE_ENDED:
-                                  if (!currentMode.equals("live")) {
-                                      playNext();
-                                  }
-                                  break;
-                          }
-                      }
-                      
-                      @Override
-                      public void onPlayerError(PlaybackException error) {
-                          ps.setVisibility(View.VISIBLE);
-                          pf.setVisibility(View.VISIBLE);
-                          
-                          String errorMsg = "خطأ في التشغيل";
-                          if (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED) {
-                              errorMsg = "خطأ في الاتصال";
-                          } else if (error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT) {
-                              errorMsg = "انتهت مهلة الاتصال";
-                          } else if (error.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED) {
-                              errorMsg = "تنسيق الفيديو غير صحيح";
-                          }
-                          
-                          Toast.makeText(MainActivity.this, errorMsg + " - جاري إعادة المحاولة...", Toast.LENGTH_SHORT).show();
-                          retryPlayback();
-                      }
-                      
-                      @Override
-                      public void onIsPlayingChanged(boolean playing) {
-                          btnPP.setImageResource(playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
-                          
-                          // كشف التوقف المفاجئ (التجمد الصامت)
-                          if (!playing && currentCh != null && !isBuffering && player.getPlaybackState() == Player.STATE_READY) {
-                              handler.postDelayed(() -> {
-                                  if (!player.isPlaying() && player.getPlaybackState() == Player.STATE_READY) {
-                                      player.play(); // إعادة التشغيل التلقائي
-                                  }
-                              }, 3000);
-                          }
-                      }
-                      
-                      @Override
-                      public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
-                          if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST) {
-                              // المستخدم أوقف التشغيل يدوياً
-                          }
-                      }
-                  });
-                  // ═══════════════════════════════════════════════════════════════════════════════════
-
-                  btnPP.setOnClickListener(v -> { if(player.isPlaying()) player.pause(); else player.play(); });
-                  btnRew.setOnClickListener(v -> player.seekBack());
-                  btnFF.setOnClickListener(v -> player.seekForward());
-                  btnNext.setOnClickListener(v -> playNext());
-                  btnPrev.setOnClickListener(v -> playPrev());
-                  btnDlna.setOnClickListener(v -> {
-                      if (currentCh == null) return;
-                      startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(currentCh.u), "video/*"), "بث عبر..."));
-                  });
+                  setupPlayerControls();
 
                   fullCont.setOnClickListener(v -> showOverlay());
                   fullFavBtn.setOnClickListener(v -> toggleFav());
                   findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFav());
+                  findViewById(R.id.btn_settings).setOnClickListener(v -> showSettingsDialog());
 
-                  rvG = findViewById(R.id.rv_groups); rvI = findViewById(R.id.rv_items);
+                  rvG = findViewById(R.id.rv_groups); 
+                  rvI = findViewById(R.id.rv_items);
                   tTitle = findViewById(R.id.txt_title);
                   rvG.setLayoutManager(new LinearLayoutManager(this));
 
-                  loadFavs(); loadData();
+                  loadFavs(); 
+                  loadData();
                   updateProgress();
                   registerNetworkCallback();
-                  startHealthCheck(); // 🆕 فحص دوري للصحة
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-                      @Override public void handleOnBackPressed() {
+                      @Override 
+                      public void handleOnBackPressed() {
                           if (fullCont.getVisibility() == View.VISIBLE) toggleFull(false);
                           else if (!historyStack.isEmpty()) renderGallery(historyStack.pop());
                           else showExitDialog();
@@ -391,184 +398,390 @@ jobs:
               }
 
               // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🔄 نظام إعادة المحاولة المتقدم (Smart Retry System)
+              // 🎬 تهيئة ExoPlayer
               // ═══════════════════════════════════════════════════════════════════════════════════
-              private void retryPlayback() {
-                  if (currentCh == null || retryCount >= MAX_RETRIES) {
-                      if (retryCount >= MAX_RETRIES) {
-                          Toast.makeText(this, "⚠️ فشل التشغيل - جرب قناة أخرى", Toast.LENGTH_LONG).show();
-                          ps.setVisibility(View.GONE);
-                          pf.setVisibility(View.GONE);
-                      }
-                      retryCount = 0;
-                      return;
-                  }
-                  
-                  isRetrying = true;
-                  retryCount++;
-                  
-                  long delay = Math.min(800 * (long)Math.pow(1.5, retryCount - 1), 8000);
-                  
-                  handler.postDelayed(() -> {
-                      if (currentCh != null) {
-                          try {
-                              player.stop();
-                              player.clearMediaItems();
-                              
-                              MediaItem mediaItem = buildMediaItem(currentCh.u);
-                              player.setMediaItem(mediaItem);
-                              player.prepare();
-                              
-                              if (!currentMode.equals("live")) {
-                                  long pos = getSharedPreferences("res", MODE_PRIVATE).getLong(currentCh.u, 0);
-                                  if (pos > 0) player.seekTo(pos);
-                              }
-                              
-                              player.play();
-                          } catch (Exception e) {
-                              retryPlayback();
-                          }
-                      }
-                  }, delay);
-              }
+              private void initExoPlayer() {
+                  DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory()
+                      .setConnectTimeoutMs(15000)
+                      .setReadTimeoutMs(15000)
+                      .setAllowCrossProtocolRedirects(true)
+                      .setUserAgent("Mozilla/5.0");
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🆘 إعادة تشغيل قسرية عند التجمد الطويل
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              private void forceRestart() {
-                  if (currentCh == null) return;
-                  
-                  Toast.makeText(this, "🔄 إعادة تشغيل تلقائية...", Toast.LENGTH_SHORT).show();
-                  
-                  long currentPos = player.getCurrentPosition();
-                  
-                  player.stop();
-                  player.clearMediaItems();
-                  
-                  MediaItem mediaItem = buildMediaItem(currentCh.u);
-                  player.setMediaItem(mediaItem);
-                  player.prepare();
-                  
-                  if (!currentMode.equals("live") && currentPos > 0) {
-                      player.seekTo(currentPos);
-                  }
-                  
-                  player.play();
-                  
-                  isBuffering = false;
-                  retryCount = 0;
-              }
+                  DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpFactory);
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🏗️ بناء MediaItem محسّن
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              private MediaItem buildMediaItem(String url) {
-                  MediaItem.Builder builder = new MediaItem.Builder().setUri(url);
-                  
-                  if (currentMode.equals("live")) {
-                      builder.setLiveConfiguration(
-                          new MediaItem.LiveConfiguration.Builder()
-                              .setMaxPlaybackSpeed(1.02f)
-                              .setMinPlaybackSpeed(0.98f)
-                              .setTargetOffsetMs(5000)
-                              .setMaxOffsetMs(30000)
-                              .build()
-                      );
-                  }
-                  
-                  return builder.build();
-              }
-
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 💊 فحص صحة المشغل الدوري (Health Check)
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              private void startHealthCheck() {
-                  handler.postDelayed(new Runnable() {
-                      @Override
-                      public void run() {
-                          if (player != null && currentCh != null) {
-                              // فحص: هل المشغل متوقف بشكل غير طبيعي؟
-                              if (!player.isPlaying() 
-                                  && player.getPlaybackState() == Player.STATE_READY 
-                                  && !isBuffering
-                                  && fullCont.getVisibility() == View.VISIBLE) {
-                                  
-                                  player.play(); // إعادة تشغيل تلقائية
-                              }
-                              
-                              // فحص: هل عالق في البافر لفترة طويلة؟
-                              if (isBuffering && System.currentTimeMillis() - lastBufferTime > 20000) {
-                                  forceRestart();
-                              }
-                          }
-                          
-                          handler.postDelayed(this, 5000); // كل 5 ثوان
-                      }
-                  }, 5000);
-              }
-
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🌐 مراقبة الشبكة
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              private void registerNetworkCallback() {
-                  ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-                  if (cm == null) return;
-                  
-                  NetworkRequest request = new NetworkRequest.Builder()
-                      .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                  DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                      .setBufferDurationsMs(30000, 90000, 2000, 3000)
+                      .setBackBuffer(20000, true)
+                      .setPrioritizeTimeOverSizeThresholds(true)
                       .build();
+
+                  DefaultTrackSelector trackSelector = new DefaultTrackSelector(this);
                   
-                  cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
+                  exoPlayer = new ExoPlayer.Builder(this)
+                      .setMediaSourceFactory(new DefaultMediaSourceFactory(dataSourceFactory))
+                      .setLoadControl(loadControl)
+                      .setTrackSelector(trackSelector)
+                      .setSeekBackIncrementMs(10000)
+                      .setSeekForwardIncrementMs(10000)
+                      .build();
+
+                  smallPVExo.setPlayer(exoPlayer);
+
+                  exoPlayer.addListener(new Player.Listener() {
                       @Override
-                      public void onLost(Network network) {
-                          runOnUiThread(() -> 
-                              Toast.makeText(MainActivity.this, "⚠️ انقطاع الإنترنت", Toast.LENGTH_SHORT).show()
-                          );
+                      public void onPlaybackStateChanged(int state) {
+                          int v = (state == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
+                          ps.setVisibility(v);
+                          pf.setVisibility(v);
+                          if (state == Player.STATE_READY && currentCh != null) savePos();
                       }
-                      
+
                       @Override
-                      public void onAvailable(Network network) {
-                          runOnUiThread(() -> {
-                              Toast.makeText(MainActivity.this, "✅ عودة الاتصال", Toast.LENGTH_SHORT).show();
-                              if (player != null && !player.isPlaying() && currentCh != null) {
-                                  retryCount = 0;
-                                  handler.postDelayed(() -> retryPlayback(), 1000);
-                              }
-                          });
+                      public void onIsPlayingChanged(boolean playing) {
+                          btnPP.setImageResource(playing ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play);
+                      }
+
+                      @Override
+                      public void onPlayerError(PlaybackException error) {
+                          Toast.makeText(MainActivity.this, "خطأ ExoPlayer - جرب VLC من الإعدادات", Toast.LENGTH_LONG).show();
                       }
                   });
               }
 
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🎬 تهيئة VLC Player
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void initVLCPlayer() {
+                  try {
+                      ArrayList<String> options = new ArrayList<>();
+                      options.add("--aout=opensles");
+                      options.add("--audio-time-stretch");
+                      options.add("-vvv");
+                      options.add("--network-caching=10000");
+                      options.add("--file-caching=10000");
+                      options.add("--live-caching=10000");
+                      options.add("--http-reconnect");
+                      options.add("--no-drop-late-frames");
+                      options.add("--no-skip-frames");
+
+                      libVLC = new LibVLC(this, options);
+                      vlcPlayer = new org.videolan.libvlc.MediaPlayer(libVLC);
+
+                      vlcPlayer.setEventListener(new org.videolan.libvlc.MediaPlayer.EventListener() {
+                          @Override
+                          public void onEvent(org.videolan.libvlc.MediaPlayer.Event event) {
+                              runOnUiThread(() -> {
+                                  switch (event.type) {
+                                      case org.videolan.libvlc.MediaPlayer.Event.Buffering:
+                                          float percent = event.getBuffering();
+                                          if (percent < 100) {
+                                              ps.setVisibility(View.VISIBLE);
+                                              pf.setVisibility(View.VISIBLE);
+                                          } else {
+                                              ps.setVisibility(View.GONE);
+                                              pf.setVisibility(View.GONE);
+                                          }
+                                          break;
+                                      case org.videolan.libvlc.MediaPlayer.Event.Playing:
+                                          ps.setVisibility(View.GONE);
+                                          pf.setVisibility(View.GONE);
+                                          btnPP.setImageResource(android.R.drawable.ic_media_pause);
+                                          break;
+                                      case org.videolan.libvlc.MediaPlayer.Event.Paused:
+                                          btnPP.setImageResource(android.R.drawable.ic_media_play);
+                                          break;
+                                      case org.videolan.libvlc.MediaPlayer.Event.EncounteredError:
+                                          Toast.makeText(MainActivity.this, "خطأ VLC - جرب ExoPlayer", Toast.LENGTH_SHORT).show();
+                                          break;
+                                  }
+                              });
+                          }
+                      });
+                  } catch (Exception e) {
+                      Toast.makeText(this, "فشل تهيئة VLC", Toast.LENGTH_SHORT).show();
+                  }
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // ⚙️ نافذة الإعدادات
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void showSettingsDialog() {
+                  Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+                  dialog.setContentView(R.layout.dialog_settings);
+                  
+                  CheckBox cbVLC = dialog.findViewById(R.id.cb_use_vlc);
+                  CheckBox cbBG = dialog.findViewById(R.id.cb_prevent_bg);
+                  Button btnSave = dialog.findViewById(R.id.btn_save_settings);
+
+                  cbVLC.setChecked(useVLC);
+                  cbBG.setChecked(preventBackground);
+
+                  btnSave.setOnClickListener(v -> {
+                      boolean oldVLC = useVLC;
+                      useVLC = cbVLC.isChecked();
+                      preventBackground = cbBG.isChecked();
+
+                      prefs.edit()
+                          .putBoolean("use_vlc", useVLC)
+                          .putBoolean("prevent_bg", preventBackground)
+                          .apply();
+
+                      Toast.makeText(this, "✅ تم حفظ الإعدادات", Toast.LENGTH_SHORT).show();
+                      
+                      if (oldVLC != useVLC && currentCh != null) {
+                          stopAllPlayers();
+                          handler.postDelayed(() -> playChannel(currentCh, savedItemIndex, true), 500);
+                      }
+                      
+                      dialog.dismiss();
+                  });
+
+                  dialog.show();
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🎮 التحكم في المشغلات
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void setupPlayerControls() {
+                  btnPP.setOnClickListener(v -> {
+                      if (useVLC) {
+                          if (vlcPlayer.isPlaying()) vlcPlayer.pause();
+                          else vlcPlayer.play();
+                      } else {
+                          if (exoPlayer.isPlaying()) exoPlayer.pause();
+                          else exoPlayer.play();
+                      }
+                  });
+
+                  btnRew.setOnClickListener(v -> {
+                      if (useVLC) {
+                          long pos = vlcPlayer.getTime() - 10000;
+                          vlcPlayer.setTime(Math.max(0, pos));
+                      } else {
+                          exoPlayer.seekBack();
+                      }
+                  });
+
+                  btnFF.setOnClickListener(v -> {
+                      if (useVLC) {
+                          long pos = vlcPlayer.getTime() + 10000;
+                          vlcPlayer.setTime(Math.min(vlcPlayer.getLength(), pos));
+                      } else {
+                          exoPlayer.seekForward();
+                      }
+                  });
+
+                  btnNext.setOnClickListener(v -> playNext());
+                  btnPrev.setOnClickListener(v -> playPrev());
+                  
+                  btnDlna.setOnClickListener(v -> {
+                      if (currentCh == null) return;
+                      startActivity(Intent.createChooser(
+                          new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(currentCh.u), "video/*"), 
+                          "بث عبر..."
+                      ));
+                  });
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // ▶️ تشغيل القناة/الفيديو
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void playChannel(Ch c, int pos, boolean doubleClick) {
+                  currentCh = c;
+                  savedItemIndex = pos;
+
+                  stopAllPlayers();
+
+                  if (useVLC) {
+                      playWithVLC(c.u);
+                      txtPlayerType.setText("🎬 VLC Player");
+                      smallPVVlc.setVisibility(View.VISIBLE);
+                      smallPVExo.setVisibility(View.GONE);
+                  } else {
+                      playWithExo(c.u);
+                      txtPlayerType.setText("🎬 ExoPlayer");
+                      smallPVExo.setVisibility(View.VISIBLE);
+                      smallPVVlc.setVisibility(View.GONE);
+                  }
+
+                  tTitle.setText(c.n);
+                  tFullChName.setText(c.n);
+                  Glide.with(this).load(c.l).into(fullChLogo);
+                  updateFavIcon();
+
+                  if (doubleClick || !currentMode.equals("live")) {
+                      toggleFull(true);
+                  }
+              }
+
+              private void playWithExo(String url) {
+                  MediaItem mediaItem = MediaItem.fromUri(url);
+                  exoPlayer.setMediaItem(mediaItem);
+                  exoPlayer.prepare();
+                  
+                  long pos = prefs.getLong(url, 0);
+                  if (pos > 0 && !currentMode.equals("live")) {
+                      exoPlayer.seekTo(pos);
+                  }
+                  
+                  if (!preventBackground) {
+                      exoPlayer.play();
+                  }
+              }
+
+              private void playWithVLC(String url) {
+                  try {
+                      Media media = new Media(libVLC, Uri.parse(url));
+                      media.setHWDecoderEnabled(true, false);
+                      media.addOption(":network-caching=10000");
+                      media.addOption(":file-caching=10000");
+                      media.addOption(":live-caching=10000");
+                      
+                      vlcPlayer.setMedia(media);
+                      media.release();
+                      
+                      long pos = prefs.getLong(url, 0);
+                      if (pos > 0 && !currentMode.equals("live")) {
+                          vlcPlayer.setTime(pos);
+                      }
+                      
+                      if (!preventBackground) {
+                          vlcPlayer.play();
+                      }
+                  } catch (Exception e) {
+                      Toast.makeText(this, "خطأ في تشغيل VLC", Toast.LENGTH_SHORT).show();
+                  }
+              }
+
+              private void stopAllPlayers() {
+                  if (exoPlayer != null) {
+                      exoPlayer.stop();
+                      exoPlayer.clearMediaItems();
+                  }
+                  if (vlcPlayer != null && vlcPlayer.isPlaying()) {
+                      vlcPlayer.stop();
+                  }
+              }
+
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              // 🔄 التبديل بين الشاشات
+              // ═══════════════════════════════════════════════════════════════════════════════════
+              private void toggleFull(boolean full) {
+                  if (full) {
+                      mainUI.setVisibility(View.GONE);
+                      fullCont.setVisibility(View.VISIBLE);
+                      
+                      if (useVLC) {
+                          vlcPlayer.detachViews();
+                          vlcPlayer.attachViews(fullPVVlc, null, false, false);
+                          fullPVVlc.setVisibility(View.VISIBLE);
+                          fullPVExo.setVisibility(View.GONE);
+                      } else {
+                          PlayerView.switchTargetView(exoPlayer, smallPVExo, fullPVExo);
+                          fullPVExo.setVisibility(View.VISIBLE);
+                          fullPVVlc.setVisibility(View.GONE);
+                      }
+                      
+                      showOverlay();
+                      showInfobar();
+                      fullCont.requestFocus();
+                  } else {
+                      fullCont.setVisibility(View.GONE);
+                      mainUI.setVisibility(View.VISIBLE);
+                      
+                      if (useVLC) {
+                          vlcPlayer.detachViews();
+                          vlcPlayer.attachViews(smallPVVlc, null, false, false);
+                      } else {
+                          PlayerView.switchTargetView(exoPlayer, fullPVExo, smallPVExo);
+                      }
+                      
+                      if (savedItemIndex != -1) {
+                          rvI.postDelayed(() -> {
+                              rvI.scrollToPosition(savedItemIndex);
+                              RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex);
+                              if (vh != null) vh.itemView.requestFocus();
+                          }, 150);
+                      }
+                  }
+              }
+
+              private void savePos() {
+                  if (currentCh == null || currentMode.equals("live")) return;
+                  
+                  long pos = useVLC ? vlcPlayer.getTime() : exoPlayer.getCurrentPosition();
+                  if (pos > 0) {
+                      prefs.edit().putLong(currentCh.u, pos).apply();
+                  }
+              }
+
+              private void playNext() {
+                  int i = currentItems.indexOf(currentCh);
+                  if (i != -1 && i < currentItems.size() - 1)
+                      playChannel(currentItems.get(i + 1), i + 1, true);
+              }
+
+              private void playPrev() {
+                  int i = currentItems.indexOf(currentCh);
+                  if (i > 0)
+                      playChannel(currentItems.get(i - 1), i - 1, true);
+              }
+
               @Override
-              protected void onStop() { 
-                  super.onStop(); 
-                  if (player != null) {
-                      savePos();
-                      player.pause(); 
+              protected void onStop() {
+                  super.onStop();
+                  savePos();
+                  if (preventBackground) {
+                      if (useVLC && vlcPlayer != null) vlcPlayer.pause();
+                      if (!useVLC && exoPlayer != null) exoPlayer.pause();
                   }
               }
 
               @Override
-              protected void onDestroy() { 
-                  super.onDestroy(); 
+              protected void onDestroy() {
+                  super.onDestroy();
                   handler.removeCallbacksAndMessages(null);
-                  bufferHandler.removeCallbacksAndMessages(null);
-                  if (player != null) { 
-                      player.release(); 
-                      player = null; 
-                  } 
+                  
+                  if (exoPlayer != null) {
+                      exoPlayer.release();
+                      exoPlayer = null;
+                  }
+                  
+                  if (vlcPlayer != null) {
+                      vlcPlayer.release();
+                      vlcPlayer = null;
+                  }
+                  
+                  if (libVLC != null) {
+                      libVLC.release();
+                      libVLC = null;
+                  }
               }
 
               @Override
               public boolean onKeyDown(int keyCode, KeyEvent event) {
                   if (fullCont.getVisibility() == View.VISIBLE) {
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { player.seekBack(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { player.seekForward(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) { 
-                          if (overlay.getVisibility() == View.VISIBLE) overlay.setVisibility(View.GONE); else showOverlay();
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) {
+                          if (useVLC) vlcPlayer.setTime(Math.max(0, vlcPlayer.getTime() - 10000));
+                          else exoPlayer.seekBack();
+                          showOverlay();
                           return true;
                       }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_UP) { showOverlay(); return true; }
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                          if (useVLC) vlcPlayer.setTime(Math.min(vlcPlayer.getLength(), vlcPlayer.getTime() + 10000));
+                          else exoPlayer.seekForward();
+                          showOverlay();
+                          return true;
+                      }
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) {
+                          if (overlay.getVisibility() == View.VISIBLE) overlay.setVisibility(View.GONE);
+                          else showOverlay();
+                          return true;
+                      }
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                          showOverlay();
+                          return true;
+                      }
                   }
                   return super.onKeyDown(keyCode, event);
               }
@@ -580,64 +793,28 @@ jobs:
                   handler.postDelayed(hideOverlay, 5000);
               }
 
-              private void toggleFull(boolean full) {
-                  if (full) { 
-                      mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE); 
-                      PlayerView.switchTargetView(player, smallPV, fullPV); showOverlay(); showInfobar(); 
-                      fullCont.requestFocus();
-                  } else { 
-                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); 
-                      PlayerView.switchTargetView(player, fullPV, smallPV);
-                      if (savedItemIndex != -1) {
-                          rvI.postDelayed(() -> {
-                              rvI.scrollToPosition(savedItemIndex);
-                              RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex);
-                              if (vh != null) vh.itemView.requestFocus();
-                          }, 150);
+              private void registerNetworkCallback() {
+                  ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                  if (cm == null) return;
+
+                  NetworkRequest request = new NetworkRequest.Builder()
+                      .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                      .build();
+
+                  cm.registerNetworkCallback(request, new ConnectivityManager.NetworkCallback() {
+                      @Override
+                      public void onLost(Network network) {
+                          runOnUiThread(() -> Toast.makeText(MainActivity.this, "⚠️ انقطاع الإنترنت", Toast.LENGTH_SHORT).show());
                       }
-                  }
+
+                      @Override
+                      public void onAvailable(Network network) {
+                          runOnUiThread(() -> Toast.makeText(MainActivity.this, "✅ عودة الاتصال", Toast.LENGTH_SHORT).show());
+                      }
+                  });
               }
 
-              private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; 
-                  savedItemIndex = pos; 
-                  isRetrying = false;
-                  retryCount = 0;
-                  isBuffering = false;
-                  
-                  MediaItem mediaItem = buildMediaItem(c.u);
-                  
-                  player.stop();
-                  player.clearMediaItems();
-                  player.setMediaItem(mediaItem);
-                  player.prepare(); 
-                  
-                  long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
-                  if(r > 0 && !currentMode.equals("live")) player.seekTo(r);
-                  
-                  player.play();
-                  tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
-                  if (doubleClick || !currentMode.equals("live")) toggleFull(true);
-              }
-
-              private void savePos() { 
-                  if(currentCh != null && !currentMode.equals("live") && player.getDuration() > 0) 
-                      getSharedPreferences("res", MODE_PRIVATE).edit().putLong(currentCh.u, player.getCurrentPosition()).apply(); 
-              }
-              
-              private void playNext() { 
-                  int i = currentItems.indexOf(currentCh); 
-                  if(i != -1 && i < currentItems.size()-1) 
-                      playChannel(currentItems.get(i+1), i+1, true); 
-              }
-              
-              private void playPrev() { 
-                  int i = currentItems.indexOf(currentCh); 
-                  if(i > 0) 
-                      playChannel(currentItems.get(i-1), i-1, true); 
-              }
-
-              private String getT(Ch c) { 
+              private String getT(Ch c) {
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
                   if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie";
@@ -646,136 +823,248 @@ jobs:
               }
 
               private void setMode(String m) {
-                  currentMode = m; historyStack.clear();
+                  currentMode = m;
+                  historyStack.clear();
                   LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) rvI.getLayoutParams();
                   if (m.equals("live")) {
-                      leftSide.setVisibility(View.VISIBLE); params.weight = 0.55f;
+                      leftSide.setVisibility(View.VISIBLE);
+                      params.weight = 0.55f;
                       rvI.setLayoutManager(new LinearLayoutManager(this));
                   } else {
-                      leftSide.setVisibility(View.GONE); params.weight = 0.80f;
+                      leftSide.setVisibility(View.GONE);
+                      params.weight = 0.80f;
                       rvI.setLayoutManager(new GridLayoutManager(this, 5));
                   }
                   rvI.setLayoutParams(params);
-                  if(m.equals("fav")) { currentItems = new ArrayList<>(favList); rvG.setVisibility(View.GONE); rvI.setAdapter(new ItemAdapter(currentItems)); return; }
+                  if (m.equals("fav")) {
+                      currentItems = new ArrayList<>(favList);
+                      rvG.setVisibility(View.GONE);
+                      rvI.setAdapter(new ItemAdapter(currentItems));
+                      return;
+                  }
                   rvG.setVisibility(View.VISIBLE);
                   Map<String, List<Ch>> d = m.equals("movie") ? movie : (m.equals("series") ? series : live);
                   List<String> groups = new ArrayList<>(d.keySet());
                   rvG.setAdapter(new GroupAdapter(groups));
-                  if (!groups.isEmpty()) { currentCat = groups.get(0); renderGallery("root"); }
+                  if (!groups.isEmpty()) {
+                      currentCat = groups.get(0);
+                      renderGallery("root");
+                  }
               }
 
               private void renderGallery(String pid) {
-                  currentParentId = pid; List<Ch> filtered = new ArrayList<>();
-                  for (Ch i : database) if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid)) filtered.add(i);
-                  currentItems = filtered; rvI.setAdapter(new ItemAdapter(currentItems));
-                  rvI.postDelayed(() -> { if(rvI.getChildCount() > 0) rvI.getChildAt(0).requestFocus(); }, 200);
+                  currentParentId = pid;
+                  List<Ch> filtered = new ArrayList<>();
+                  for (Ch i : database)
+                      if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid))
+                          filtered.add(i);
+                  currentItems = filtered;
+                  rvI.setAdapter(new ItemAdapter(currentItems));
+                  rvI.postDelayed(() -> {
+                      if (rvI.getChildCount() > 0) rvI.getChildAt(0).requestFocus();
+                  }, 200);
               }
 
               private void toggleFav() {
                   if (currentCh == null) return;
-                  int idx = -1; for (int i=0; i<favList.size(); i++) if(favList.get(i).u.equals(currentCh.u)) idx = i;
-                  if (idx != -1) favList.remove(idx); else favList.add(currentCh);
+                  int idx = -1;
+                  for (int i = 0; i < favList.size(); i++)
+                      if (favList.get(i).u.equals(currentCh.u)) idx = i;
+                  if (idx != -1) favList.remove(idx);
+                  else favList.add(currentCh);
                   getSharedPreferences("p", MODE_PRIVATE).edit().putString("f", new Gson().toJson(favList)).apply();
                   updateFavIcon();
               }
 
               private void updateFavIcon() {
-                  boolean isFav = false; if (currentCh != null) for (Ch f : favList) if(f.u.equals(currentCh.u)) isFav = true;
+                  boolean isFav = false;
+                  if (currentCh != null)
+                      for (Ch f : favList)
+                          if (f.u.equals(currentCh.u)) isFav = true;
                   fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
               }
 
               private Runnable hideOverlay = () -> overlay.setVisibility(View.GONE);
-              private void showInfobar() { infoBar.setVisibility(View.VISIBLE); handler.removeCallbacks(hideInfobar); handler.postDelayed(hideInfobar, 4000); }
+
+              private void showInfobar() {
+                  infoBar.setVisibility(View.VISIBLE);
+                  handler.removeCallbacks(hideInfobar);
+                  handler.postDelayed(hideInfobar, 4000);
+              }
+
               private Runnable hideInfobar = () -> infoBar.setVisibility(View.GONE);
 
               private void updateProgress() {
-                  if (player != null && !currentMode.equals("live")) {
-                      long dur = player.getDuration(), pos = player.getCurrentPosition();
-                      if (dur > 0) { seekBar.setMax((int) dur); seekBar.setProgress((int) pos); tTime.setText(formatTime(pos) + " / " + formatTime(dur)); }
+                  if (!currentMode.equals("live")) {
+                      if (useVLC && vlcPlayer != null) {
+                          long dur = vlcPlayer.getLength();
+                          long pos = vlcPlayer.getTime();
+                          if (dur > 0) {
+                              seekBar.setMax((int) dur);
+                              seekBar.setProgress((int) pos);
+                              tTime.setText(formatTime(pos) + " / " + formatTime(dur));
+                          }
+                      } else if (exoPlayer != null) {
+                          long dur = exoPlayer.getDuration();
+                          long pos = exoPlayer.getCurrentPosition();
+                          if (dur > 0) {
+                              seekBar.setMax((int) dur);
+                              seekBar.setProgress((int) pos);
+                              tTime.setText(formatTime(pos) + " / " + formatTime(dur));
+                          }
+                      }
                   }
                   handler.postDelayed(this::updateProgress, 1000);
               }
-              
-              private String formatTime(long ms) { 
-                  long s=(ms/1000)%60, m=(ms/60000)%60, h=(ms/3600000); 
-                  return h>0?String.format("%02d:%02d:%02d",h,m,s):String.format("%02d:%02d",m,s); 
+
+              private String formatTime(long ms) {
+                  long s = (ms / 1000) % 60, m = (ms / 60000) % 60, h = (ms / 3600000);
+                  return h > 0 ? String.format("%02d:%02d:%02d", h, m, s) : String.format("%02d:%02d", m, s);
               }
 
-              private void loadData() { 
-                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u"; 
-                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, res -> { parse(res); setMode("live"); }, 
-                      error -> Toast.makeText(this, "خطأ في تحميل البيانات", Toast.LENGTH_SHORT).show())); 
+              private void loadData() {
+                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
+                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, res -> {
+                      parse(res);
+                      setMode("live");
+                  }, error -> Toast.makeText(this, "خطأ في تحميل البيانات", Toast.LENGTH_SHORT).show()));
               }
-              
-              private void loadFavs() { 
-                  String j = getSharedPreferences("p", MODE_PRIVATE).getString("f", "[]"); 
-                  favList = new Gson().fromJson(j, new TypeToken<List<Ch>>(){}.getType()); 
-                  if(favList == null) favList = new ArrayList<>(); 
+
+              private void loadFavs() {
+                  String j = getSharedPreferences("p", MODE_PRIVATE).getString("f", "[]");
+                  favList = new Gson().fromJson(j, new TypeToken<List<Ch>>() {}.getType());
+                  if (favList == null) favList = new ArrayList<>();
               }
 
               private void parse(String text) {
-                  database.clear(); live.clear(); movie.clear(); series.clear();
-                  String[] lines = text.split("\n"); Ch cur = null;
+                  database.clear();
+                  live.clear();
+                  movie.clear();
+                  series.clear();
+                  String[] lines = text.split("\n");
+                  Ch cur = null;
                   for (String l : lines) {
                       if (l.contains("#EXTINF:")) {
-                          cur = new Ch(); cur.n = l.split(",").length > 1 ? l.split(",")[1].trim() : "Unknown";
+                          cur = new Ch();
+                          cur.n = l.split(",").length > 1 ? l.split(",")[1].trim() : "Unknown";
                           cur.g = l.contains("group-title=\"") ? l.split("group-title=\"")[1].split("\"")[0] : "عام";
                           cur.l = l.contains("tvg-logo=\"") ? l.split("tvg-logo=\"")[1].split("\"")[0] : "";
                           cur.id = l.contains("tvg-id=\"") ? l.split("tvg-id=\"")[1].split("\"")[0] : "";
                           cur.pid = l.contains("parent-id=\"") ? l.split("parent-id=\"")[1].split("\"")[0] : "root";
                           cur.isF = l.contains("is-folder=\"") ? l.split("is-folder=\"")[1].split("\"")[0] : "0";
                       } else if (l.trim().startsWith("http") && cur != null) {
-                          cur.u = l.trim(); database.add(cur);
-                          String type = getT(cur); Map<String, List<Ch>> d = type.equals("movie")?movie:(type.equals("series")?series:live);
-                          if (!d.containsKey(cur.g)) d.put(cur.g, new ArrayList<>()); d.get(cur.g).add(cur); cur = null;
+                          cur.u = l.trim();
+                          database.add(cur);
+                          String type = getT(cur);
+                          Map<String, List<Ch>> d = type.equals("movie") ? movie : (type.equals("series") ? series : live);
+                          if (!d.containsKey(cur.g)) d.put(cur.g, new ArrayList<>());
+                          d.get(cur.g).add(cur);
+                          cur = null;
                       }
                   }
               }
 
-              private void hideSystemUI() { 
+              private void hideSystemUI() {
                   getWindow().getDecorView().setSystemUiVisibility(
-                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | 
-                      View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | 
-                      View.SYSTEM_UI_FLAG_FULLSCREEN
-                  ); 
+                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                          View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                          View.SYSTEM_UI_FLAG_FULLSCREEN
+                  );
               }
-              
-              private void showExitDialog() { 
+
+              private void showExitDialog() {
                   new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
                       .setTitle("خروج")
                       .setMessage("هل تريد الخروج من التطبيق؟")
-                      .setPositiveButton("ن��م", (d, w) -> finish())
+                      .setPositiveButton("نعم", (d, w) -> finish())
                       .setNegativeButton("لا", null)
-                      .show(); 
+                      .show();
               }
 
               class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.VH> {
-                  List<String> g; GroupAdapter(List<String> g) { this.g = g; }
-                  public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
-                  public void onBindViewHolder(VH h, int i) {
-                      h.n.setText(g.get(i)); h.itemView.setFocusable(true); 
-                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
-                      h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); });
+                  List<String> g;
+
+                  GroupAdapter(List<String> g) {
+                      this.g = g;
                   }
-                  public int getItemCount() { return g.size(); }
-                  class VH extends RecyclerView.ViewHolder { TextView n; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); } }
+
+                  public VH onCreateViewHolder(ViewGroup p, int t) {
+                      return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false));
+                  }
+
+                  public void onBindViewHolder(VH h, int i) {
+                      h.n.setText(g.get(i));
+                      h.itemView.setFocusable(true);
+                      h.itemView.setOnFocusChangeListener((v, f) -> v.setScaleX(f ? 1.05f : 1f));
+                      h.itemView.setOnClickListener(v -> {
+                          currentCat = g.get(i);
+                          renderGallery("root");
+                      });
+                  }
+
+                  public int getItemCount() {
+                      return g.size();
+                  }
+
+                  class VH extends RecyclerView.ViewHolder {
+                      TextView n;
+
+                      VH(View v) {
+                          super(v);
+                          n = v.findViewById(R.id.txt_name);
+                      }
+                  }
               }
 
               class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.VH> {
-                  List<Ch> items; ItemAdapter(List<Ch> i) { items = i; }
-                  public int getItemViewType(int p) { return currentMode.equals("live") ? 0 : 1; }
-                  public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(t==0?R.layout.item_channel:R.layout.item_card, p, false)); }
+                  List<Ch> items;
+
+                  ItemAdapter(List<Ch> i) {
+                      items = i;
+                  }
+
+                  public int getItemViewType(int p) {
+                      return currentMode.equals("live") ? 0 : 1;
+                  }
+
+                  public VH onCreateViewHolder(ViewGroup p, int t) {
+                      return new VH(LayoutInflater.from(p.getContext()).inflate(t == 0 ? R.layout.item_channel : R.layout.item_card, p, false));
+                  }
+
                   public void onBindViewHolder(VH h, int i) {
-                      Ch c = items.get(i); h.n.setText(c.n); Glide.with(h.itemView).load(c.l).into(h.img);
+                      Ch c = items.get(i);
+                      h.n.setText(c.n);
+                      Glide.with(h.itemView).load(c.l).into(h.img);
                       h.itemView.setFocusable(true);
-                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
+                      h.itemView.setOnFocusChangeListener((v, f) -> v.setScaleX(f ? 1.08f : 1f));
                       h.itemView.setOnClickListener(v -> {
-                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); savedItemIndex = 0; }
-                          else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); }
+                          if ("1".equals(c.isF)) {
+                              historyStack.push(currentParentId);
+                              renderGallery(c.id);
+                              savedItemIndex = 0;
+                          } else {
+                              long t = System.currentTimeMillis();
+                              boolean isDouble = (t - lastClickTime < 500);
+                              lastClickTime = t;
+                              playChannel(c, i, isDouble);
+                          }
                       });
                   }
-                  public int getItemCount() { return items.size(); }
-                  class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
+
+                  public int getItemCount() {
+                      return items.size();
+                  }
+
+                  class VH extends RecyclerView.ViewHolder {
+                      TextView n;
+                      ImageView img;
+
+                      VH(View v) {
+                          super(v);
+                          n = v.findViewById(R.id.txt_name);
+                          img = v.findViewById(R.id.img_logo);
+                      }
+                  }
               }
           }
           JAVAEOF
@@ -843,8 +1132,8 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 42
-                  versionName "42.0.Professional"
+                  versionCode 43
+                  versionName "43.0.DualPlayer"
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
@@ -861,6 +1150,7 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
+              implementation 'org.videolan.android:libvlc-all:3.5.1'
               constraints { 
                   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10")
                   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") 
@@ -904,8 +1194,8 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Upload_Professional_APK
+      - name: Upload_Dual_Player_APK
         uses: actions/upload-artifact@v4
         with: 
-          name: Rabie_Pro_V42_Professional_NoFreeze
+          name: Rabie_Pro_V43_VLC_ExoPlayer
           path: app/build/outputs/apk/debug/*.apk
