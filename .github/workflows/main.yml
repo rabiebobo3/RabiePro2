@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Icon_Logo_New
+name: Rabie_Pro_V41_Fixed_Build
 on: [push]
 jobs:
   build:
@@ -8,12 +8,14 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_V41_Ultimate_With_VLC_Internal
+      - name: Build_V41_Ultimate_Fixed
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
+          # إعدادات الذاكرة وحل تعارض كوتلن
           echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" > gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
+          echo "kotlin.stdlib.default.dependency=false" >> gradle.properties
           
           cat <<EOF > settings.gradle
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
@@ -54,13 +56,11 @@ jobs:
               xmlns:app="http://schemas.android.com/apk/res-auto"
               android:layout_width="match_parent" android:layout_height="match_parent" 
               android:background="#05030A" android:keepScreenOn="true">
-              
               <LinearLayout android:id="@+id/splash_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:gravity="center" android:elevation="20dp">
                   <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000" app:cardElevation="0dp">
                       <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
                   </androidx.cardview.widget.CardView>
               </LinearLayout>
-
               <LinearLayout android:id="@+id/main_ui_container" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
                   <LinearLayout android:id="@+id/top_tabs" android:layout_width="match_parent" android:layout_height="65dp" android:background="#000" android:gravity="center_vertical" android:padding="10dp">
                       <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp">
@@ -74,7 +74,6 @@ jobs:
                       <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style"/>
                       <Button android:id="@+id/btn_settings" android:layout_width="55dp" android:layout_height="42dp" android:text="⚙️" android:textColor="#FFF" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:layout_marginLeft="8dp"/>
                   </LinearLayout>
-
                   <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
                       <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
@@ -91,7 +90,6 @@ jobs:
                       <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26" android:focusable="true"/>
                   </LinearLayout>
               </LinearLayout>
-
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
                   <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
@@ -205,7 +203,6 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // تهيئة ExoPlayer
                   player = new ExoPlayer.Builder(this).setLoadControl(new DefaultLoadControl.Builder().setBufferDurationsMs(30000, 60000, 1000, 2000).build()).build();
                   smallPV.setPlayer(player);
                   player.addListener(new Player.Listener() {
@@ -216,7 +213,6 @@ jobs:
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
-                  // تهيئة VLC الداخلي
                   ArrayList<String> options = new ArrayList<>();
                   options.add("--file-caching=3000"); options.add("--network-caching=3000");
                   libVLC = new LibVLC(this, options);
@@ -235,11 +231,9 @@ jobs:
                   fullCont.setOnClickListener(v -> showOverlay());
                   fullFavBtn.setOnClickListener(v -> toggleFav());
                   findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFav());
-
                   rvG = findViewById(R.id.rv_groups); rvI = findViewById(R.id.rv_items);
                   tTitle = findViewById(R.id.txt_title);
                   rvG.setLayoutManager(new LinearLayoutManager(this));
-
                   loadFavs(); loadData(); updateProgress();
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -271,7 +265,6 @@ jobs:
               private void playChannel(Ch c, int pos, boolean doubleClick) {
                   currentCh = c; savedItemIndex = pos;
                   tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
-                  
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE) ? vlcFull : vlcSmall;
@@ -352,7 +345,6 @@ jobs:
               }
 
               private String getT(Ch c) { String g = c.g.toLowerCase(); if ("1".equals(c.isF)) return "series"; if (g.contains("movie") || g.contains("أفلام")) return "movie"; if (g.contains("series") || g.contains("مسلسل")) return "series"; return "live"; }
-              
               private void parse(String text) {
                   database.clear(); live.clear(); movie.clear(); series.clear();
                   String[] lines = text.split("\n"); Ch cur = null;
@@ -397,7 +389,6 @@ jobs:
                   public int getItemCount() { return items.size(); }
                   class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
               }
-              
               @Override protected void onDestroy() { super.onDestroy(); player.release(); vlcMediaPlayer.release(); libVLC.release(); }
           }
           EOF
@@ -436,7 +427,7 @@ jobs:
           </androidx.cardview.widget.CardView>
           EOF
 
-          cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.class
+          cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
           package com.rabie.iptv;
           import android.content.Context;
           import com.google.android.gms.cast.framework.*;
@@ -454,6 +445,13 @@ jobs:
               compileSdk 34
               defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 41; versionName "41.0" }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+              
+              configurations.all {
+                  resolutionStrategy {
+                      exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
+                      exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
+                  }
+              }
           }
           dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -466,7 +464,10 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              implementation 'org.videolan.android:libvlc-all:3.6.0-eap11'
+              # حل التعارض هنا عن طريق استبعاد كوتلن من VLC
+              implementation ('org.videolan.android:libvlc-all:3.6.0-eap11') {
+                  exclude group: 'org.jetbrains.kotlin'
+              }
           }
           EOF
 
@@ -488,4 +489,4 @@ jobs:
 
       - name: Upload_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Final_Internal_VLC, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Fixed, path: app/build/outputs/apk/debug/*.apk }
