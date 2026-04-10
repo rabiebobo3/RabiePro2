@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Icon_Logo_New
+name: Rabie_Pro_V41_VLC_Internal
 on: [push]
 jobs:
   build:
@@ -7,122 +7,85 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
-
-      - name: Build_V41_Ultimate_With_Icon
+      - name: Build_V41_Ultimate_With_Internal_VLC
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
-          
           cat <<EOF > settings.gradle
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } }
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } }
           }
           include ':app'
           EOF
-
           mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
-          
           curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
-
           cat <<EOF > app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
-              <color name="colorPrimary">#05030A</color>
-              <color name="colorPrimaryDark">#000000</color>
-              <color name="colorAccent">#FF9100</color>
-              <color name="white">#FFFFFF</color>
+          <color name="colorPrimary">#05030A</color>
+          <color name="colorPrimaryDark">#000000</color>
+          <color name="colorAccent">#FF9100</color>
+          <color name="white">#FFFFFF</color>
           </resources>
           EOF
-
           cat <<EOF > app/src/main/res/values/strings.xml
           <resources>
-              <string name="app_name">Rabie Pro</string>
+          <string name="app_name">Rabie Pro</string>
           </resources>
           EOF
-
           echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
-
+          
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent" android:layout_height="match_parent" 
-              android:background="#05030A" android:keepScreenOn="true">
-              
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#05030A"
+              android:keepScreenOn="true">
               <LinearLayout android:id="@+id/splash_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:gravity="center" android:elevation="20dp">
-                  <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000" app:cardElevation="0dp">
+                  <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000">
                       <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
                   </androidx.cardview.widget.CardView>
               </LinearLayout>
-
               <LinearLayout android:id="@+id/main_ui_container" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
                   <LinearLayout android:id="@+id/top_tabs" android:layout_width="match_parent" android:layout_height="65dp" android:background="#000" android:gravity="center_vertical" android:padding="10dp">
-                      <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp">
-                          <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
-                      </androidx.cardview.widget.CardView>
                       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RABIE PRO" android:textColor="#ff9100" android:textStyle="bold" android:textSize="22sp" android:layout_marginRight="20dp"/>
                       <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"/>
-                      <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="42dp" android:text="القنوات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="42dp" android:text="الأفلام" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="42dp" android:text="المسلسلات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/btn_settings" android:layout_width="55dp" android:layout_height="42dp" android:text="⚙" android:textColor="#EEE" android:textSize="18sp" android:focusable="true" android:background="@drawable/tab_button_style" android:layout_marginLeft="8dp"/>
+                      <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="42dp" android:text="القنوات" android:textColor="#EEE" android:background="@drawable/tab_button_style"/>
+                      <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="42dp" android:text="الأفلام" android:textColor="#EEE" android:background="@drawable/tab_button_style"/>
+                      <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="42dp" android:text="المسلسلات" android:textColor="#EEE" android:background="@drawable/tab_button_style"/>
+                      <Button android:id="@+id/tab_player_settings" android:layout_width="wrap_content" android:layout_height="42dp" android:text="تغيير المشغل" android:textColor="#FFF" android:background="@drawable/tab_button_style"/>
                   </LinearLayout>
-
-                  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
+                  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal">
                       <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
-                          <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
-                              <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
-                              <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/small_vlc_player" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                          <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000">
+                              <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                                  <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
+                                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" />
+                              </FrameLayout>
+                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone"/>
                           </androidx.cardview.widget.CardView>
-                          <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
-                              <TextView android:id="@+id/txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اختر محتوى" android:textColor="#ff9100" android:textSize="20sp" android:textStyle="bold" android:maxLines="1"/>
-                              <Button android:id="@+id/btn_toggle_fav" android:layout_width="wrap_content" android:layout_height="42dp" android:text="⭐ إضافة للمفضلة" android:layout_marginTop="15dp" android:focusable="true" android:background="@drawable/focus_highlight" android:paddingHorizontal="25dp" android:textColor="#FFF"/>
-                          </LinearLayout>
+                          <TextView android:id="@+id/txt_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="20sp" android:layout_marginTop="10dp" android:gravity="center"/>
                       </LinearLayout>
-                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_items" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.25" android:background="#0A0817" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
-                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
+                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_items" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.25" android:background="#0A0817"/>
+                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26"/>
                   </LinearLayout>
               </LinearLayout>
-
-              <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
-                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
-                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/full_vlc_player" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                  <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
-                      <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
-                          <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
-                              <ImageView android:id="@+id/full_ch_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-                          </androidx.cardview.widget.CardView>
-                          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                              <TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/>
-                          </LinearLayout>
-                          <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                          <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                          <androidx.mediarouter.app.MediaRouteButton android:id="@+id/media_route_button" android:layout_width="50dp" android:layout_height="50dp" android:focusable="true" android:background="@drawable/round_btn"/>
-                      </LinearLayout>
-                      <LinearLayout android:id="@+id/vod_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#B3000000" android:padding="15dp" android:gravity="center">
-                          <SeekBar android:id="@+id/full_seekbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="#ff9100" android:thumbTint="#ff9100" android:focusable="true"/>
-                          <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-                               <TextView android:id="@+id/txt_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00 / 00:00" android:textColor="#FFF" android:textSize="14sp" android:layout_centerVertical="true"/>
-                               <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_centerInParent="true">
-                                  <ImageButton android:id="@+id/btn_prev_item" android:layout_width="45dp" android:layout_height="45dp" android:src="@android:drawable/ic_media_previous" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_rew" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_media_rew" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_play_pause" android:layout_width="65dp" android:layout_height="65dp" android:src="@android:drawable/ic_media_pause" android:background="@drawable/round_btn_orange" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_ffwd" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_media_ff" android:background="@drawable/round_btn" android:layout_marginLeft="10dp" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_next_item" android:layout_width="45dp" android:layout_height="45dp" android:src="@android:drawable/ic_media_next" android:background="@drawable/round_btn" android:layout_marginLeft="10dp" android:focusable="true"/>
-                               </LinearLayout>
-                          </RelativeLayout>
-                      </LinearLayout>
+              <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000">
+                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false" />
+                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" />
+                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone"/>
+                  <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="bottom" android:visibility="gone">
+                     <TextView android:id="@+id/full_ch_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#B3000000" android:textColor="#FFF" android:padding="20dp" android:textSize="24sp"/>
                   </LinearLayout>
-                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
               </FrameLayout>
           </RelativeLayout>
           EOF
@@ -147,35 +110,28 @@ jobs:
           import com.google.gson.Gson;
           import com.google.gson.reflect.TypeToken;
           import java.util.*;
-          import com.google.android.gms.cast.framework.*;
-          import androidx.mediarouter.app.MediaRouteButton;
-          import org.videolan.libvlc.*;
+          import org.videolan.libvlc.LibVLC;
+          import org.videolan.libvlc.Media;
+          import org.videolan.libvlc.MediaPlayer;
           import org.videolan.libvlc.util.VLCVideoLayout;
 
           public class MainActivity extends AppCompatActivity {
-              private ExoPlayer player;
-              private LibVLC libVLC;
-              private org.videolan.libvlc.MediaPlayer vlcPlayer;
-              private String currentPlayerType = "exoplayer";
+              private ExoPlayer exoPlayer;
+              private LibVLC libVlc;
+              private MediaPlayer vlcPlayer;
+              private VLCVideoLayout vlcLayoutSmall, vlcLayoutFull;
+              
               private List<Ch> database = new ArrayList<>();
               private Map<String, List<Ch>> live = new LinkedHashMap<>(), movie = new LinkedHashMap<>(), series = new LinkedHashMap<>();
-              private List<Ch> favList = new ArrayList<>(), currentItems = new ArrayList<>();
-              private Stack<String> historyStack = new Stack<>();
-              private String currentParentId = "root", currentCat = "", currentMode = "live";
+              private List<Ch> currentItems = new ArrayList<>();
+              private String currentCat = "", currentMode = "live";
               private Ch currentCh;
               private RecyclerView rvG, rvI;
-              private TextView tTitle, tTime, tFullChName;
+              private TextView tTitle, tFullChName;
               private PlayerView smallPV, fullPV;
-              private VLCVideoLayout smallVLC, fullVLC;
-              private View mainUI, fullCont, overlay, vodControls, splash, infoBar, leftSide;
-              private ImageView fullChLogo, fullFavBtn;
-              private SeekBar seekBar;
+              private View mainUI, fullCont, splash, overlay;
               private ProgressBar ps, pf;
-              private ImageButton btnPP, btnRew, btnFF, btnNext, btnPrev, btnDlna;
-              private Handler handler = new Handler(Looper.getMainLooper());
-              private long lastClickTime = 0;
-              private int savedItemIndex = -1;
-              private boolean isRetrying = false;
+              private boolean useVlcInternal = false;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
 
@@ -183,311 +139,261 @@ jobs:
               protected void onCreate(Bundle savedInstanceState) {
                   super.onCreate(savedInstanceState);
                   setContentView(R.layout.activity_main);
-                  hideSystemUI();
-
-                  MediaRouteButton mrb = findViewById(R.id.media_route_button);
-                  CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb);
-
-                  splash = findViewById(R.id.splash_screen); mainUI = findViewById(R.id.main_ui_container);
-                  infoBar = findViewById(R.id.infobar_layout); leftSide = findViewById(R.id.left_side_container);
-                  fullChLogo = findViewById(R.id.full_ch_logo); tFullChName = findViewById(R.id.full_ch_name);
-                  fullFavBtn = findViewById(R.id.full_fav_btn); btnDlna = findViewById(R.id.btn_dlna);
-
-                  handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
-
-                  loadPlayerPreference();
-                  initializePlayers();
-
-                  smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
-                  smallVLC = findViewById(R.id.small_vlc_player); fullVLC = findViewById(R.id.full_vlc_player);
-                  fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
-                  tTime = findViewById(R.id.txt_time); seekBar = findViewById(R.id.full_seekbar);
-                  vodControls = findViewById(R.id.vod_controls);
-                  ps = findViewById(R.id.loading_s); pf = findViewById(R.id.loading_f);
-                  btnPP = findViewById(R.id.btn_play_pause);
-                  btnRew = findViewById(R.id.btn_rew); btnFF = findViewById(R.id.btn_ffwd);
-                  btnNext = findViewById(R.id.btn_next_item); btnPrev = findViewById(R.id.btn_prev_item);
-
-                  applyPlayerView();
-
-                  btnPP.setOnClickListener(v -> togglePlayPause());
-                  btnRew.setOnClickListener(v -> seekBackward());
-                  btnFF.setOnClickListener(v -> seekForward());
-                  btnNext.setOnClickListener(v -> playNext());
-                  btnPrev.setOnClickListener(v -> playPrev());
-                  btnDlna.setOnClickListener(v -> {
-                      if (currentCh == null) return;
-                      startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(currentCh.u), "video/*"), "بث عبر..."));
-                  });
-
-                  fullCont.setOnClickListener(v -> showOverlay());
-                  fullFavBtn.setOnClickListener(v -> toggleFav());
-                  findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFav());
-                  findViewById(R.id.btn_settings).setOnClickListener(v -> showSettingsDialog());
-
-                  rvG = findViewById(R.id.rv_groups); rvI = findViewById(R.id.rv_items);
-                  tTitle = findViewById(R.id.txt_title);
-                  rvG.setLayoutManager(new LinearLayoutManager(this));
-
-                  loadFavs(); loadData();
-                  updateProgress();
-
+                  getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                  
+                  useVlcInternal = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("use_vlc_int", false);
+                  
+                  initViews();
+                  initExo();
+                  initVlc();
+                  
+                  loadData();
+                  
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override public void handleOnBackPressed() {
                           if (fullCont.getVisibility() == View.VISIBLE) toggleFull(false);
-                          else if (!historyStack.isEmpty()) renderGallery(historyStack.pop());
-                          else showExitDialog();
+                          else finish();
                       }
                   });
+              }
+
+              private void initViews() {
+                  splash = findViewById(R.id.splash_screen);
+                  mainUI = findViewById(R.id.main_ui_container);
+                  smallPV = findViewById(R.id.small_player);
+                  fullPV = findViewById(R.id.full_player);
+                  vlcLayoutSmall = findViewById(R.id.vlc_layout_small);
+                  vlcLayoutFull = findViewById(R.id.vlc_layout_full);
+                  fullCont = findViewById(R.id.full_container);
+                  tTitle = findViewById(R.id.txt_title);
+                  tFullChName = findViewById(R.id.full_ch_name);
+                  ps = findViewById(R.id.loading_s);
+                  pf = findViewById(R.id.loading_f);
+                  rvG = findViewById(R.id.rv_groups);
+                  rvI = findViewById(R.id.rv_items);
+                  overlay = findViewById(R.id.overlay_full);
 
                   findViewById(R.id.tab_live).setOnClickListener(v -> setMode("live"));
                   findViewById(R.id.tab_movie).setOnClickListener(v -> setMode("movie"));
                   findViewById(R.id.tab_series).setOnClickListener(v -> setMode("series"));
-                  findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
+                  findViewById(R.id.tab_player_settings).setOnClickListener(v -> showPlayerDialog());
+                  fullCont.setOnClickListener(v -> {
+                      overlay.setVisibility(View.VISIBLE);
+                      new Handler().postDelayed(() -> overlay.setVisibility(View.GONE), 3000);
+                  });
+
+                  new Handler().postDelayed(() -> {
+                      splash.setVisibility(View.GONE);
+                      mainUI.setVisibility(View.VISIBLE);
+                  }, 2000);
               }
 
-              private void loadPlayerPreference() {
-                  currentPlayerType = getSharedPreferences("p", MODE_PRIVATE).getString("player", "exoplayer");
-              }
-
-              private void savePlayerPreference(String type) {
-                  getSharedPreferences("p", MODE_PRIVATE).edit().putString("player", type).apply();
-                  currentPlayerType = type;
-              }
-
-              private void initializePlayers() {
-                  DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                      .setBufferDurationsMs(30000, 60000, 1000, 2000)
-                      .setBackBuffer(20000, true)
-                      .setPrioritizeTimeOverSizeThresholds(true)
-                      .build();
-
-                  player = new ExoPlayer.Builder(this)
-                      .setLoadControl(loadControl)
-                      .setSeekBackIncrementMs(10000)
-                      .setSeekForwardIncrementMs(10000)
-                      .build();
-
-                  player.addListener(new Player.Listener() {
+              private void initExo() {
+                  exoPlayer = new ExoPlayer.Builder(this).build();
+                  smallPV.setPlayer(exoPlayer);
+                  exoPlayer.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
                           int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
                           ps.setVisibility(v); pf.setVisibility(v);
-                          
-                          if (s == Player.STATE_READY) {
-                              isRetrying = false;
-                              if (currentCh != null) savePos();
-                          }
-                          
-                          if (s == Player.STATE_IDLE && currentCh != null && !isRetrying) {
-                              retryPlayback();
-                          }
                       }
-                      public void onPlayerError(PlaybackException error) {
-                          ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                          retryPlayback();
-                      }
-                      public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
+              }
 
+              private void initVlc() {
                   ArrayList<String> options = new ArrayList<>();
-                  options.add("--no-drop-late-frames");
-                  options.add("--no-skip-frames");
                   options.add("--rtsp-tcp");
-                  options.add("--network-caching=2000");
-                  options.add("--live-caching=2000");
-                  libVLC = new LibVLC(this, options);
-                  vlcPlayer = new org.videolan.libvlc.MediaPlayer(libVLC);
+                  options.add("--network-caching=3000");
+                  libVlc = new LibVLC(this, options);
+                  vlcPlayer = new MediaPlayer(libVlc);
               }
 
-              private void applyPlayerView() {
-                  if (currentPlayerType.equals("vlc")) {
+              private void showPlayerDialog() {
+                  String[] items = {"ExoPlayer (سريع)", "VLC Internal (أكثر توافقاً)"};
+                  new AlertDialog.Builder(this)
+                      .setTitle("اختر المحرك الداخلي")
+                      .setSingleChoiceItems(items, useVlcInternal ? 1 : 0, (d, w) -> {
+                          useVlcInternal = (w == 1);
+                          getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("use_vlc_int", useVlcInternal).apply();
+                          Toast.makeText(this, "تم تغيير المشغل، ابدأ التشغيل الآن", Toast.LENGTH_SHORT).show();
+                          d.dismiss();
+                      }).show();
+              }
+
+              private void playChannel(Ch c) {
+                  currentCh = c;
+                  tTitle.setText(c.n);
+                  tFullChName.setText(c.n);
+                  
+                  // إيقاف المشغلين أولاً
+                  exoPlayer.stop();
+                  vlcPlayer.stop();
+
+                  if (useVlcInternal) {
                       smallPV.setVisibility(View.GONE);
-                      fullPV.setVisibility(View.GONE);
-                      smallVLC.setVisibility(View.VISIBLE);
-                      fullVLC.setVisibility(View.VISIBLE);
-                      vlcPlayer.attachViews(smallVLC, null, false, false);
-                  } else {
-                      smallPV.setVisibility(View.VISIBLE);
-                      fullPV.setVisibility(View.VISIBLE);
-                      smallVLC.setVisibility(View.GONE);
-                      fullVLC.setVisibility(View.GONE);
-                      smallPV.setPlayer(player);
-                  }
-              }
-
-              private void showSettingsDialog() {
-                  AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                  builder.setTitle("⚙ الإعدادات");
-                  
-                  String[] options = {"المشغل: ExoPlayer", "المشغل: VLC"};
-                  int selected = currentPlayerType.equals("vlc") ? 1 : 0;
-                  
-                  builder.setSingleChoiceItems(options, selected, (dialog, which) -> {
-                      String newPlayer = (which == 1) ? "vlc" : "exoplayer";
-                      if (!newPlayer.equals(currentPlayerType)) {
-                          savePlayerPreference(newPlayer);
-                          switchPlayer();
-                          Toast.makeText(this, "تم التبديل إلى " + options[which], Toast.LENGTH_SHORT).show();
-                      }
-                      dialog.dismiss();
-                  });
-                  
-                  builder.setNegativeButton("إلغاء", null);
-                  builder.show();
-              }
-
-              private void switchPlayer() {
-                  long currentPos = 0;
-                  boolean wasPlaying = false;
-                  String currentUrl = null;
-
-                  if (currentCh != null) {
-                      currentUrl = currentCh.u;
-                      if (currentPlayerType.equals("exoplayer")) {
-                          currentPos = player.getCurrentPosition();
-                          wasPlaying = player.isPlaying();
-                          player.pause();
-                      } else {
-                          currentPos = vlcPlayer.getTime();
-                          wasPlaying = vlcPlayer.isPlaying();
-                          vlcPlayer.pause();
-                      }
-                  }
-
-                  applyPlayerView();
-
-                  if (currentUrl != null) {
-                      playWithCurrentPlayer(currentUrl, currentPos, wasPlaying);
-                  }
-              }
-
-              private void playWithCurrentPlayer(String url, long position, boolean autoPlay) {
-                  if (currentPlayerType.equals("vlc")) {
-                      Media media = new Media(libVLC, Uri.parse(url));
+                      vlcLayoutSmall.setVisibility(View.VISIBLE);
+                      vlcPlayer.attachViews(vlcLayoutSmall, null, false, false);
+                      Media media = new Media(libVlc, Uri.parse(c.u));
                       vlcPlayer.setMedia(media);
-                      media.release();
                       vlcPlayer.play();
-                      if (position > 0 && !currentMode.equals("live")) {
-                          vlcPlayer.setTime(position);
-                      }
-                      if (!autoPlay) vlcPlayer.pause();
                   } else {
-                      player.setMediaItem(MediaItem.fromUri(url));
-                      player.prepare();
-                      if (position > 0 && !currentMode.equals("live")) {
-                          player.seekTo(position);
-                      }
-                      if (autoPlay) player.play();
+                      vlcLayoutSmall.setVisibility(View.GONE);
+                      smallPV.setVisibility(View.VISIBLE);
+                      exoPlayer.setMediaItem(MediaItem.fromUri(c.u));
+                      exoPlayer.prepare();
+                      exoPlayer.play();
                   }
-              }
-
-              private void togglePlayPause() {
-                  if (currentPlayerType.equals("vlc")) {
-                      if (vlcPlayer.isPlaying()) vlcPlayer.pause(); else vlcPlayer.play();
-                  } else {
-                      if (player.isPlaying()) player.pause(); else player.play();
-                  }
-              }
-
-              private void seekBackward() {
-                  if (currentPlayerType.equals("vlc")) {
-                      vlcPlayer.setTime(Math.max(0, vlcPlayer.getTime() - 10000));
-                  } else {
-                      player.seekBack();
-                  }
-              }
-
-              private void seekForward() {
-                  if (currentPlayerType.equals("vlc")) {
-                      vlcPlayer.setTime(vlcPlayer.getTime() + 10000);
-                  } else {
-                      player.seekForward();
-                  }
-              }
-
-              private void retryPlayback() {
-                  if (currentCh == null || currentPlayerType.equals("vlc")) return;
-                  isRetrying = true;
-                  handler.postDelayed(() -> {
-                      player.prepare();
-                      player.play();
-                  }, 1500);
-              }
-
-              @Override
-              protected void onStop() { 
-                  super.onStop(); 
-                  if (currentPlayerType.equals("vlc")) vlcPlayer.pause(); 
-                  else if (player != null) player.pause();
-              }
-
-              @Override
-              protected void onDestroy() { 
-                  super.onDestroy(); 
-                  if (player != null) { player.release(); player = null; }
-                  if (vlcPlayer != null) { vlcPlayer.release(); vlcPlayer = null; }
-                  if (libVLC != null) { libVLC.release(); libVLC = null; }
-              }
-
-              @Override
-              public boolean onKeyDown(int keyCode, KeyEvent event) {
-                  if (fullCont.getVisibility() == View.VISIBLE) {
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { seekBackward(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { seekForward(); showOverlay(); return true; }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) { 
-                          if (overlay.getVisibility() == View.VISIBLE) overlay.setVisibility(View.GONE); else showOverlay();
-                          return true;
-                      }
-                      if (keyCode == KeyEvent.KEYCODE_DPAD_UP) { showOverlay(); return true; }
-                  }
-                  return super.onKeyDown(keyCode, event);
-              }
-
-              private void showOverlay() {
-                  overlay.setVisibility(View.VISIBLE);
-                  vodControls.setVisibility(currentMode.equals("live") ? View.GONE : View.VISIBLE);
-                  handler.removeCallbacks(hideOverlay);
-                  handler.postDelayed(hideOverlay, 5000);
               }
 
               private void toggleFull(boolean full) {
-                  if (full) { 
-                      mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
-                      if (currentPlayerType.equals("vlc")) {
+                  if (full) {
+                      mainUI.setVisibility(View.GONE);
+                      fullCont.setVisibility(View.VISIBLE);
+                      if (useVlcInternal) {
+                          fullPV.setVisibility(View.GONE);
+                          vlcLayoutFull.setVisibility(View.VISIBLE);
                           vlcPlayer.detachViews();
-                          vlcPlayer.attachViews(fullVLC, null, false, false);
+                          vlcPlayer.attachViews(vlcLayoutFull, null, false, false);
                       } else {
-                          PlayerView.switchTargetView(player, smallPV, fullPV);
+                          vlcLayoutFull.setVisibility(View.GONE);
+                          fullPV.setVisibility(View.VISIBLE);
+                          PlayerView.switchTargetView(exoPlayer, smallPV, fullPV);
                       }
-                      showOverlay(); showInfobar(); 
-                      fullCont.requestFocus();
-                  } else { 
-                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
-                      if (currentPlayerType.equals("vlc")) {
+                  } else {
+                      fullCont.setVisibility(View.GONE);
+                      mainUI.setVisibility(View.VISIBLE);
+                      if (useVlcInternal) {
                           vlcPlayer.detachViews();
-                          vlcPlayer.attachViews(smallVLC, null, false, false);
+                          vlcPlayer.attachViews(vlcLayoutSmall, null, false, false);
                       } else {
-                          PlayerView.switchTargetView(player, fullPV, smallPV);
-                      }
-                      if (savedItemIndex != -1) {
-                          rvI.postDelayed(() -> {
-                              rvI.scrollToPosition(savedItemIndex);
-                              RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex);
-                              if (vh != null) vh.itemView.requestFocus();
-                          }, 150);
+                          PlayerView.switchTargetView(exoPlayer, fullPV, smallPV);
                       }
                   }
               }
 
-              private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  currentCh = c; savedItemIndex = pos; isRetrying = false;
-                  long r = getSharedPreferences("res", MODE_PRIVATE).getLong(c.u, 0);
-                  playWithCurrentPlayer(c.u, r, true);
-                  tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
-                  if (doubleClick || !currentMode.equals("live")) toggleFull(true);
+              private void setMode(String m) {
+                  currentMode = m;
+                  rvG.setLayoutManager(new LinearLayoutManager(this));
+                  rvI.setLayoutManager(m.equals("live") ? new LinearLayoutManager(this) : new GridLayoutManager(this, 5));
+                  Map<String, List<Ch>> d = m.equals("movie") ? movie : (m.equals("series") ? series : live);
+                  List<String> groups = new ArrayList<>(d.keySet());
+                  rvG.setAdapter(new GroupAdapter(groups));
+                  if (!groups.isEmpty()) { currentCat = groups.get(0); renderItems(); }
               }
 
-              private void savePos() { 
-                  if(currentCh != null && !currentMode.equals("live")) {
-                      long pos = currentPlayerType.equals("vlc") ? vlcPlayer.getTime() : player.getCurrentPosition();
-                      
+              private void renderItems() {
+                  currentItems.clear();
+                  Map<String, List<Ch>> d = currentMode.equals("movie") ? movie : (currentMode.equals("series") ? series : live);
+                  if (d.containsKey(currentCat)) currentItems.addAll(d.get(currentCat));
+                  rvI.setAdapter(new ItemAdapter(currentItems));
+              }
+
+              private void loadData() {
+                  String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u";
+                  Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, res -> {
+                      parse(res);
+                      setMode("live");
+                  }, null));
+              }
+
+              private void parse(String text) {
+                  String[] lines = text.split("\n"); Ch cur = null;
+                  for (String l : lines) {
+                      if (l.contains("#EXTINF:")) {
+                          cur = new Ch();
+                          cur.n = l.split(",").length > 1 ? l.split(",")[1].trim() : "Unknown";
+                          cur.g = l.contains("group-title=\"") ? l.split("group-title=\"")[1].split("\"")[0] : "General";
+                          cur.l = l.contains("tvg-logo=\"") ? l.split("tvg-logo=\"")[1].split("\"")[0] : "";
+                      } else if (l.trim().startsWith("http") && cur != null) {
+                          cur.u = l.trim();
+                          String g = cur.g.toLowerCase();
+                          if (g.contains("movie")) movie.computeIfAbsent(cur.g, k->new ArrayList<>()).add(cur);
+                          else if (g.contains("series")) series.computeIfAbsent(cur.g, k->new ArrayList<>()).add(cur);
+                          else live.computeIfAbsent(cur.g, k->new ArrayList<>()).add(cur);
+                          cur = null;
+                      }
+                  }
+              }
+
+              @Override protected void onDestroy() {
+                  super.onDestroy();
+                  exoPlayer.release();
+                  vlcPlayer.release();
+                  libVlc.release();
+              }
+
+              class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.VH> {
+                  List<String> g; GroupAdapter(List<String> g) { this.g = g; }
+                  public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
+                  public void onBindViewHolder(VH h, int i) {
+                      h.n.setText(g.get(i));
+                      h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderItems(); });
+                  }
+                  public int getItemCount() { return g.size(); }
+                  class VH extends RecyclerView.ViewHolder { TextView n; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); } }
+              }
+
+              class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.VH> {
+                  List<Ch> items; ItemAdapter(List<Ch> i) { items = i; }
+                  public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(currentMode.equals("live")?R.layout.item_channel:R.layout.item_card, p, false)); }
+                  public void onBindViewHolder(VH h, int i) {
+                      Ch c = items.get(i); h.n.setText(c.n); Glide.with(h.itemView).load(c.l).into(h.img);
+                      h.itemView.setOnClickListener(v -> playChannel(c));
+                      h.itemView.setOnLongClickListener(v -> { toggleFull(true); return true; });
+                  }
+                  public int getItemCount() { return items.size(); }
+                  class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
+              }
+          }
+          EOF
+
+          cat <<EOF > app/build.gradle
+          plugins { id 'com.android.application' version '8.2.2' }
+          android {
+              namespace 'com.rabie.iptv'
+              compileSdk 34
+              defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 41; versionName "41.0" }
+              compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+          }
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'androidx.media3:media3-exoplayer:1.2.1'
+              implementation 'androidx.media3:media3-ui:1.2.1'
+              implementation 'androidx.recyclerview:recyclerview:1.3.0'
+              implementation 'androidx.cardview:cardview:1.0.0'
+              implementation 'com.android.volley:volley:1.2.1'
+              implementation 'com.google.code.gson:gson:2.10.1'
+              implementation 'com.github.bumptech.glide:glide:4.16.0'
+              // إضافة مكتبة VLC الداخلية
+              implementation 'org.videolan.android:libvlc-all:3.6.0-eap11'
+          }
+          EOF
+
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:label="@string/app_name" android:icon="@mipmap/ic_launcher">
+                  <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+              </application>
+          </manifest>' > app/src/main/AndroidManifest.xml
+
+          cat <<EOF > app/src/main/res/drawable/tab_button_style.xml
+          <selector xmlns:android="http://schemas.android.com/apk/res/android">
+          <item android:state_focused="true"><shape><solid android:color="#ff9100"/><corners android:radius="10dp"/></shape></item>
+          <item><shape><solid android:color="#120E26"/><corners android:radius="10dp"/></shape></item>
+          </selector>
+          EOF
+
+          gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Upload_V41_Apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: Rabie_Pro_V41_Internal_VLC
+          path: app/build/outputs/apk/debug/*.apk
