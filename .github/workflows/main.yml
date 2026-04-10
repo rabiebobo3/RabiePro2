@@ -272,6 +272,7 @@ jobs:
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
                       vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
+                      vlcMediaPlayer.detachViews();
                       vlcMediaPlayer.attachViews(targetVlc, null, false, false);
                       Media m = new Media(libVLC, Uri.parse(c.u));
                       vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
@@ -279,22 +280,33 @@ jobs:
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
                       smallPV.setVisibility((fullCont.getVisibility() == View.VISIBLE || doubleClick) ? View.GONE : View.VISIBLE);
                       fullPV.setVisibility((fullCont.getVisibility() == View.VISIBLE || doubleClick) ? View.VISIBLE : View.GONE);
+                      if (fullCont.getVisibility() == View.VISIBLE || doubleClick) { smallPV.setPlayer(null); fullPV.setPlayer(player); }
+                      else { fullPV.setPlayer(null); smallPV.setPlayer(player); }
                       player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); player.play();
                   }
-                  
                   if (doubleClick || !getT(c).equals("live")) toggleFull(true);
               }
 
               private void toggleFull(boolean full) {
                   if (full) { 
                       mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
-                      if (!currentPlayerMode.equals("VLC Player (Internal)")) PlayerView.switchTargetView(player, smallPV, fullPV);
-                      else { vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE); vlcMediaPlayer.attachViews(vlcFull, null, false, false); }
+                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
+                          vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcFull, null, false, false);
+                      } else {
+                          smallPV.setPlayer(null); fullPV.setPlayer(player);
+                          PlayerView.switchTargetView(player, smallPV, fullPV);
+                      }
                       showOverlay(); fullCont.requestFocus();
                   } else { 
                       fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
-                      if (!currentPlayerMode.equals("VLC Player (Internal)")) PlayerView.switchTargetView(player, fullPV, smallPV);
-                      else { vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE); vlcMediaPlayer.attachViews(vlcSmall, null, false, false); }
+                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
+                          vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcSmall, null, false, false);
+                      } else {
+                          fullPV.setPlayer(null); smallPV.setPlayer(player);
+                          PlayerView.switchTargetView(player, fullPV, smallPV);
+                      }
                   }
               }
 
@@ -309,12 +321,11 @@ jobs:
               private void showOverlay() {
                   overlay.setVisibility(View.VISIBLE);
                   boolean isLive = currentCh != null && getT(currentCh).equals("live");
-                  // إخفاء الـ SeekBar وأزرار التقديم في القنوات المباشرة
-                  seekBar.setVisibility(isLive ? View.GONE : View.VISIBLE);
-                  findViewById(R.id.btn_rew).setVisibility(isLive ? View.GONE : View.VISIBLE);
-                  findViewById(R.id.btn_ffwd).setVisibility(isLive ? View.GONE : View.VISIBLE);
-                  tTime.setVisibility(isLive ? View.GONE : View.VISIBLE);
-                  
+                  int vis = isLive ? View.GONE : View.VISIBLE;
+                  seekBar.setVisibility(vis);
+                  findViewById(R.id.btn_rew).setVisibility(vis);
+                  findViewById(R.id.btn_ffwd).setVisibility(vis);
+                  tTime.setVisibility(vis);
                   handler.removeCallbacks(hideOverlay);
                   handler.postDelayed(hideOverlay, 5000);
               }
@@ -325,7 +336,7 @@ jobs:
               }
 
               private void seek(long ms) {
-                  if (currentCh != null && getT(currentCh).equals("live")) return; // منع التقديم في البث المباشر
+                  if (currentCh != null && getT(currentCh).equals("live")) return;
                   if (currentPlayerMode.equals("VLC Player (Internal)")) vlcMediaPlayer.setTime(vlcMediaPlayer.getTime() + ms);
                   else player.seekTo(player.getCurrentPosition() + ms);
               }
