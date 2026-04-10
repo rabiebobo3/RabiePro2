@@ -1,4 +1,4 @@
-name: Rabie_Pro_V45_Final_Fixed
+name: Rabie_Pro_V45_With_VLC_Complete
 on: [push]
 jobs:
   build:
@@ -8,22 +8,39 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_Final_Fixed
+      - name: Build_Complete_App_With_VLC
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
-          echo "android.useAndroidX=true" > gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
+          
+          cat <<EOF > gradle.properties
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m
+          org.gradle.daemon=false
+          android.enableR8.fullMode=true
+          EOF
           
           cat <<EOF > settings.gradle
-          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          pluginManagement { 
+              repositories { 
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              } 
+          }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral(); maven { url "https://jitpack.io" } }
+              repositories { 
+                  google()
+                  mavenCentral()
+                  maven { url "https://jitpack.io" }
+              }
           }
           include ':app'
           EOF
 
-          mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
+          mkdir -p app/src/main/java/com/rabie/iptv
+          mkdir -p app/src/main/res/{layout,drawable,xml,values,mipmap-hdpi,mipmap-xhdpi,mipmap-xxhdpi,mipmap-xxxhdpi}
           
           curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
@@ -47,69 +64,651 @@ jobs:
           </resources>
           EOF
 
-          echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
+          cat <<EOF > app/src/main/res/xml/network_security_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+              <base-config cleartextTrafficPermitted="true"/>
+          </network-security-config>
+          EOF
 
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent" android:layout_height="match_parent" 
-              android:background="#05030A" android:keepScreenOn="true">
-              
-              <LinearLayout android:id="@+id/splash_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:gravity="center" android:elevation="20dp">
-                  <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000" app:cardElevation="0dp">
-                      <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#05030A"
+              android:keepScreenOn="true">
+
+              <!-- Splash Screen -->
+              <LinearLayout
+                  android:id="@+id/splash_screen"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:background="#05030A"
+                  android:gravity="center"
+                  android:elevation="20dp">
+                  <androidx.cardview.widget.CardView
+                      android:layout_width="150dp"
+                      android:layout_height="150dp"
+                      app:cardCornerRadius="75dp"
+                      app:cardBackgroundColor="#000"
+                      app:cardElevation="0dp">
+                      <ImageView
+                          android:layout_width="match_parent"
+                          android:layout_height="match_parent"
+                          android:src="@drawable/app_logo"
+                          android:scaleType="centerCrop"/>
                   </androidx.cardview.widget.CardView>
               </LinearLayout>
 
-              <LinearLayout android:id="@+id/main_ui_container" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
-                  <LinearLayout android:id="@+id/top_tabs" android:layout_width="match_parent" android:layout_height="65dp" android:background="#000" android:gravity="center_vertical" android:padding="10dp">
-                      <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp">
-                          <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
+              <!-- Main UI -->
+              <LinearLayout
+                  android:id="@+id/main_ui_container"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:orientation="vertical"
+                  android:visibility="gone">
+
+                  <!-- Top Tabs -->
+                  <LinearLayout
+                      android:id="@+id/top_tabs"
+                      android:layout_width="match_parent"
+                      android:layout_height="65dp"
+                      android:background="#000"
+                      android:gravity="center_vertical"
+                      android:padding="10dp">
+
+                      <androidx.cardview.widget.CardView
+                          android:layout_width="45dp"
+                          android:layout_height="45dp"
+                          app:cardCornerRadius="22.5dp"
+                          app:cardBackgroundColor="#000"
+                          android:layout_marginRight="10dp">
+                          <ImageView
+                              android:layout_width="match_parent"
+                              android:layout_height="match_parent"
+                              android:src="@drawable/app_logo"
+                              android:scaleType="centerCrop"/>
                       </androidx.cardview.widget.CardView>
-                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RABIE PRO" android:textColor="#ff9100" android:textStyle="bold" android:textSize="22sp" android:layout_marginRight="20dp"/>
-                      <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"/>
-                      <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="42dp" android:text="القنوات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_movie" android:layout_width="wrap_content" android:layout_height="42dp" android:text="الأفلام" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_series" android:layout_width="wrap_content" android:layout_height="42dp" android:text="المسلسلات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
-                      <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:nextFocusDown="@+id/rv_items"/>
+
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="RABIE PRO"
+                          android:textColor="#ff9100"
+                          android:textStyle="bold"
+                          android:textSize="22sp"
+                          android:layout_marginRight="20dp"/>
+
+                      <View
+                          android:layout_width="0dp"
+                          android:layout_height="match_parent"
+                          android:layout_weight="1"/>
+
+                      <Button
+                          android:id="@+id/tab_live"
+                          android:layout_width="wrap_content"
+                          android:layout_height="42dp"
+                          android:text="القنوات"
+                          android:textColor="#EEE"
+                          android:textSize="13sp"
+                          android:layout_marginLeft="8dp"
+                          android:focusable="true"
+                          android:background="@drawable/tab_button_style"
+                          android:nextFocusDown="@+id/rv_items"/>
+
+                      <Button
+                          android:id="@+id/tab_movie"
+                          android:layout_width="wrap_content"
+                          android:layout_height="42dp"
+                          android:text="الأفلام"
+                          android:textColor="#EEE"
+                          android:textSize="13sp"
+                          android:layout_marginLeft="8dp"
+                          android:focusable="true"
+                          android:background="@drawable/tab_button_style"
+                          android:nextFocusDown="@+id/rv_items"/>
+
+                      <Button
+                          android:id="@+id/tab_series"
+                          android:layout_width="wrap_content"
+                          android:layout_height="42dp"
+                          android:text="المسلسلات"
+                          android:textColor="#EEE"
+                          android:textSize="13sp"
+                          android:layout_marginLeft="8dp"
+                          android:focusable="true"
+                          android:background="@drawable/tab_button_style"
+                          android:nextFocusDown="@+id/rv_items"/>
+
+                      <Button
+                          android:id="@+id/tab_fav"
+                          android:layout_width="55dp"
+                          android:layout_height="42dp"
+                          android:text="⭐"
+                          android:textColor="#ff9100"
+                          android:textSize="16sp"
+                          android:focusable="true"
+                          android:background="@drawable/tab_button_style"
+                          android:nextFocusDown="@+id/rv_items"/>
+
+                      <Button
+                          android:id="@+id/btn_settings"
+                          android:layout_width="55dp"
+                          android:layout_height="42dp"
+                          android:text="⚙️"
+                          android:textColor="#EEE"
+                          android:textSize="16sp"
+                          android:focusable="true"
+                          android:background="@drawable/tab_button_style"
+                          android:layout_marginLeft="8dp"/>
                   </LinearLayout>
 
-                  <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
-                      <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
-                          <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
-                              <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
-                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                  <!-- Content Area -->
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:orientation="horizontal"
+                      android:baselineAligned="false">
+
+                      <!-- Left Side (Preview + Info) -->
+                      <LinearLayout
+                          android:id="@+id/left_side_container"
+                          android:layout_width="0dp"
+                          android:layout_height="match_parent"
+                          android:layout_weight="0.55"
+                          android:orientation="vertical"
+                          android:padding="10dp">
+
+                          <androidx.cardview.widget.CardView
+                              android:layout_width="match_parent"
+                              android:layout_height="0dp"
+                              android:layout_weight="0.65"
+                              app:cardCornerRadius="15dp"
+                              app:cardBackgroundColor="#000"
+                              app:cardElevation="12dp">
+
+                              <FrameLayout
+                                  android:layout_width="match_parent"
+                                  android:layout_height="match_parent">
+
+                                  <androidx.media3.ui.PlayerView
+                                      android:id="@+id/small_player_exo"
+                                      android:layout_width="match_parent"
+                                      android:layout_height="match_parent"
+                                      app:use_controller="false"/>
+
+                                  <SurfaceView
+                                      android:id="@+id/small_player_vlc"
+                                      android:layout_width="match_parent"
+                                      android:layout_height="match_parent"
+                                      android:visibility="gone"/>
+
+                                  <ProgressBar
+                                      android:id="@+id/loading_s"
+                                      android:layout_width="50dp"
+                                      android:layout_height="50dp"
+                                      android:layout_gravity="center"
+                                      android:visibility="gone"
+                                      android:indeterminateTint="#ff9100"/>
+                              </FrameLayout>
                           </androidx.cardview.widget.CardView>
-                          <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
-                              <TextView android:id="@+id/txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اختر محتوى" android:textColor="#ff9100" android:textSize="20sp" android:textStyle="bold" android:maxLines="1"/>
-                              <Button android:id="@+id/btn_toggle_fav" android:layout_width="wrap_content" android:layout_height="42dp" android:text="⭐ إضافة للمفضلة" android:layout_marginTop="15dp" android:focusable="true" android:background="@drawable/focus_highlight" android:paddingHorizontal="25dp" android:textColor="#FFF"/>
+
+                          <LinearLayout
+                              android:layout_width="match_parent"
+                              android:layout_height="0dp"
+                              android:layout_weight="0.35"
+                              android:padding="20dp"
+                              android:layout_marginTop="10dp"
+                              android:background="@drawable/tab_button_style"
+                              android:orientation="vertical">
+
+                              <TextView
+                                  android:id="@+id/txt_title"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:text="اختر محتوى"
+                                  android:textColor="#ff9100"
+                                  android:textSize="20sp"
+                                  android:textStyle="bold"
+                                  android:maxLines="1"/>
+
+                              <Button
+                                  android:id="@+id/btn_toggle_fav"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="42dp"
+                                  android:text="⭐ إضافة للمفضلة"
+                                  android:layout_marginTop="15dp"
+                                  android:focusable="true"
+                                  android:background="@drawable/focus_highlight"
+                                  android:paddingHorizontal="25dp"
+                                  android:textColor="#FFF"/>
                           </LinearLayout>
                       </LinearLayout>
-                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_items" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.25" android:background="#0A0817" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
-                      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26" android:focusable="true" android:nextFocusUp="@+id/top_tabs"/>
+
+                      <!-- Items List -->
+                      <androidx.recyclerview.widget.RecyclerView
+                          android:id="@+id/rv_items"
+                          android:layout_width="0dp"
+                          android:layout_height="match_parent"
+                          android:layout_weight="0.25"
+                          android:background="#0A0817"
+                          android:focusable="true"
+                          android:nextFocusUp="@+id/top_tabs"/>
+
+                      <!-- Groups List -->
+                      <androidx.recyclerview.widget.RecyclerView
+                          android:id="@+id/rv_groups"
+                          android:layout_width="0dp"
+                          android:layout_height="match_parent"
+                          android:layout_weight="0.20"
+                          android:background="#120E26"
+                          android:focusable="true"
+                          android:nextFocusUp="@+id/top_tabs"/>
                   </LinearLayout>
               </LinearLayout>
 
-              <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
-                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
-                  <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
-                      <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
-                          <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
-                              <ImageView android:id="@+id/full_ch_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+              <!-- Full Screen Player -->
+              <FrameLayout
+                  android:id="@+id/full_container"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent"
+                  android:visibility="gone"
+                  android:background="#000"
+                  android:focusable="true"
+                  android:clickable="true">
+
+                  <androidx.media3.ui.PlayerView
+                      android:id="@+id/full_player_exo"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      app:resize_mode="fill"
+                      app:use_controller="false"/>
+
+                  <SurfaceView
+                      android:id="@+id/full_player_vlc"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:visibility="gone"/>
+
+                  <!-- Overlay Controls -->
+                  <LinearLayout
+                      android:id="@+id/overlay_full"
+                      android:layout_width="match_parent"
+                      android:layout_height="match_parent"
+                      android:orientation="vertical"
+                      android:gravity="bottom"
+                      android:visibility="gone">
+
+                      <!-- Info Bar -->
+                      <LinearLayout
+                          android:id="@+id/infobar_layout"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:background="#E6000000"
+                          android:orientation="horizontal"
+                          android:padding="15dp"
+                          android:gravity="center_vertical">
+
+                          <androidx.cardview.widget.CardView
+                              android:layout_width="60dp"
+                              android:layout_height="60dp"
+                              app:cardCornerRadius="30dp"
+                              app:cardBackgroundColor="#000"
+                              android:layout_marginRight="15dp">
+                              <ImageView
+                                  android:id="@+id/full_ch_logo"
+                                  android:layout_width="match_parent"
+                                  android:layout_height="match_parent"
+                                  android:scaleType="centerCrop"/>
                           </androidx.cardview.widget.CardView>
-                          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                              <TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/>
+
+                          <LinearLayout
+                              android:layout_width="0dp"
+                              android:layout_height="wrap_content"
+                              android:layout_weight="1"
+                              android:orientation="vertical">
+
+                              <TextView
+                                  android:id="@+id/full_ch_name"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:textColor="#ff9100"
+                                  android:textSize="22sp"
+                                  android:textStyle="bold"/>
+
+                              <TextView
+                                  android:id="@+id/txt_player_type"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:textColor="#AAA"
+                                  android:textSize="12sp"
+                                  android:layout_marginTop="3dp"/>
                           </LinearLayout>
-                          <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                          <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                          <androidx.mediarouter.app.MediaRouteButton android:id="@+id/media_route_button" android:layout_width="50dp" android:layout_height="50dp" android:focusable="true" android:background="@drawable/round_btn"/>
+
+                          <ImageButton
+                              android:id="@+id/btn_dlna"
+                              android:layout_width="50dp"
+                              android:layout_height="50dp"
+                              android:src="@android:drawable/ic_menu_share"
+                              android:background="@drawable/round_btn"
+                              android:layout_marginRight="10dp"
+                              android:focusable="true"/>
+
+                          <ImageButton
+                              android:id="@+id/full_fav_btn"
+                              android:layout_width="50dp"
+                              android:layout_height="50dp"
+                              android:src="@android:drawable/btn_star_big_off"
+                              android:background="@drawable/round_btn"
+                              android:layout_marginRight="10dp"
+                              android:focusable="true"/>
+
+                          <androidx.mediarouter.app.MediaRouteButton
+                              android:id="@+id/media_route_button"
+                              android:layout_width="50dp"
+                              android:layout_height="50dp"
+                              android:focusable="true"
+                              android:background="@drawable/round_btn"/>
                       </LinearLayout>
-                      <LinearLayout android:id="@+id/vod_controls" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="#B3000000" android:padding="15dp" android:gravity="center">
-                          <SeekBar android:id="@+id/full_seekbar" android:layout_width="match_parent" android:layout_height="wrap_content" android:progressTint="#ff9100" android:thumbTint="#ff9100" android:focusable="true"/>
-                          <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content">
-                               <TextView android:id="@+id/txt_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="00:00 / 00:00" android:textColor="#FFF" android:textSize="14sp" android:layout_centerVertical="true"/>
-                               <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_centerInParent="true">
-                                  <ImageButton android:id="@+id/btn_prev_item" android:layout_width="45dp" android:layout_height="45dp" android:src="@android:drawable/ic_media_previous" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_rew" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_media_rew" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
-                                  <ImageButton android:id="@+id/btn_play_pause" android:layout_width="65dp" android:layout_height="65dp" 
+
+                      <!-- VOD Controls -->
+                      <LinearLayout
+                          android:id="@+id/vod_controls"
+                          android:layout_width="match_parent"
+                          android:layout_height="wrap_content"
+                          android:orientation="vertical"
+                          android:background="#B3000000"
+                          android:padding="15dp"
+                          android:gravity="center">
+
+                          <SeekBar
+                              android:id="@+id/full_seekbar"
+                              android:layout_width="match_parent"
+                              android:layout_height="wrap_content"
+                              android:progressTint="#ff9100"
+                              android:thumbTint="#ff9100"
+                              android:focusable="true"/>
+
+                          <RelativeLayout
+                              android:layout_width="match_parent"
+                              android:layout_height="wrap_content">
+
+                              <TextView
+                                  android:id="@+id/txt_time"
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:text="00:00 / 00:00"
+                                  android:textColor="#FFF"
+                                  android:textSize="14sp"
+                                  android:layout_centerVertical="true"/>
+
+                              <LinearLayout
+                                  android:layout_width="wrap_content"
+                                  android:layout_height="wrap_content"
+                                  android:orientation="horizontal"
+                                  android:layout_centerInParent="true">
+
+                                  <ImageButton
+                                      android:id="@+id/btn_prev_item"
+                                      android:layout_width="45dp"
+                                      android:layout_height="45dp"
+                                      android:src="@android:drawable/ic_media_previous"
+                                      android:background="@drawable/round_btn"
+                                      android:layout_marginRight="10dp"
+                                      android:focusable="true"/>
+
+                                  <ImageButton
+                                      android:id="@+id/btn_rew"
+                                      android:layout_width="50dp"
+                                      android:layout_height="50dp"
+                                      android:src="@android:drawable/ic_media_rew"
+                                      android:background="@drawable/round_btn"
+                                      android:layout_marginRight="10dp"
+                                      android:focusable="true"/>
+
+                                  <ImageButton
+                                      android:id="@+id/btn_play_pause"
+                                      android:layout_width="65dp"
+                                      android:layout_height="65dp"
+                                      android:src="@android:drawable/ic_media_pause"
+                                      android:background="@drawable/round_btn_orange"
+                                      android:focusable="true"/>
+
+                                  <ImageButton
+                                      android:id="@+id/btn_ffwd"
+                                      android:layout_width="50dp"
+                                      android:layout_height="50dp"
+                                      android:src="@android:drawable/ic_media_ff"
+                                      android:background="@drawable/round_btn"
+                                      android:layout_marginLeft="10dp"
+                                      android:focusable="true"/>
+
+                                  <ImageButton
+                                      android:id="@+id/btn_next_item"
+                                      android:layout_width="45dp"
+                                      android:layout_height="45dp"
+                                      android:src="@android:drawable/ic_media_next"
+                                      android:background="@drawable/round_btn"
+                                      android:layout_marginLeft="10dp"
+                                      android:focusable="true"/>
+                              </LinearLayout>
+                          </RelativeLayout>
+                      </LinearLayout>
+                  </LinearLayout>
+
+                  <ProgressBar
+                      android:id="@+id/loading_f"
+                      android:layout_width="80dp"
+                      android:layout_height="80dp"
+                      android:layout_gravity="center"
+                      android:visibility="gone"
+                      android:indeterminateTint="#ff9100"/>
+              </FrameLayout>
+          </RelativeLayout>
+          EOF
+
+          cat <<EOF > app/src/main/res/layout/dialog_settings.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="600dp"
+              android:layout_height="wrap_content"
+              android:orientation="vertical"
+              android:padding="25dp"
+              android:background="@drawable/tab_button_style">
+
+              <TextView
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:text="⚙️ الإعدادات"
+                  android:textColor="#ff9100"
+                  android:textSize="24sp"
+                  android:textStyle="bold"
+                  android:gravity="center"
+                  android:layout_marginBottom="25dp"/>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"
+                  android:padding="15dp"
+                  android:background="@drawable/focus_highlight"
+                  android:layout_marginBottom="15dp">
+
+                  <LinearLayout
+                      android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:orientation="vertical">
+
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="🎬 استخدام مشغل VLC"
+                          android:textColor="#FFF"
+                          android:textSize="18sp"
+                          android:textStyle="bold"/>
+
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="مشغل قوي بدون تجمد (يُنصح به)"
+                          android:textColor="#AAA"
+                          android:textSize="13sp"
+                          android:layout_marginTop="5dp"/>
+                  </LinearLayout>
+
+                  <CheckBox
+                      android:id="@+id/cb_use_vlc"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:buttonTint="#ff9100"
+                      android:scaleX="1.3"
+                      android:scaleY="1.3"/>
+              </LinearLayout>
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal"
+                  android:gravity="center_vertical"
+                  android:padding="15dp"
+                  android:background="@drawable/focus_highlight"
+                  android:layout_marginBottom="15dp">
+
+                  <LinearLayout
+                      android:layout_width="0dp"
+                      android:layout_height="wrap_content"
+                      android:layout_weight="1"
+                      android:orientation="vertical">
+
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="🔇 منع التشغيل التلقائي"
+                          android:textColor="#FFF"
+                          android:textSize="18sp"
+                          android:textStyle="bold"/>
+
+                      <TextView
+                          android:layout_width="wrap_content"
+                          android:layout_height="wrap_content"
+                          android:text="إيقاف التشغيل في الخلفية"
+                          android:textColor="#AAA"
+                          android:textSize="13sp"
+                          android:layout_marginTop="5dp"/>
+                  </LinearLayout>
+
+                  <CheckBox
+                      android:id="@+id/cb_prevent_bg"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:buttonTint="#ff9100"
+                      android:scaleX="1.3"
+                      android:scaleY="1.3"
+                      android:checked="true"/>
+              </LinearLayout>
+
+              <Button
+                  android:id="@+id/btn_save_settings"
+                  android:layout_width="match_parent"
+                  android:layout_height="55dp"
+                  android:text="✅ حفظ الإعدادات"
+                  android:textColor="#FFF"
+                  android:textSize="16sp"
+                  android:textStyle="bold"
+                  android:background="@drawable/round_btn_orange"
+                  android:layout_marginTop="10dp"/>
+          </LinearLayout>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/round_btn.xml
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+              <solid android:color="#25FFFFFF"/>
+              <stroke android:width="1dp" android:color="#40FFFFFF"/>
+          </shape>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/round_btn_orange.xml
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+              <solid android:color="#ff9100"/>
+          </shape>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/tab_button_style.xml
+          <selector xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:state_focused="true">
+                  <shape>
+                      <solid android:color="#ff9100"/>
+                      <corners android:radius="20dp"/>
+                  </shape>
+              </item>
+              <item>
+                  <shape>
+                      <solid android:color="#120E26"/>
+                      <corners android:radius="20dp"/>
+                      <stroke android:width="1dp" android:color="#261E4A"/>
+                  </shape>
+              </item>
+          </selector>
+          EOF
+
+          cat <<EOF > app/src/main/res/drawable/focus_highlight.xml
+          <selector xmlns:android="http://schemas.android.com/apk/res/android">
+              <item android:state_focused="true">
+                  <shape>
+                      <solid android:color="#33FF9100"/>
+                      <stroke android:width="4dp" android:color="#ff9100"/>
+                      <corners android:radius="12dp"/>
+                  </shape>
+              </item>
+              <item>
+                  <shape>
+                      <solid android:color="@android:color/transparent"/>
+                      <stroke android:width="1dp" android:color="#20FFFFFF"/>
+                      <corners android:radius="12dp"/>
+                  </shape>
+              </item>
+          </selector>
+          EOF
+
+          cat <<EOF > app/src/main/res/layout/item_channel.xml
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:gravity="center_vertical"
+              android:padding="12dp"
+              android:focusable="true"
+              android:clickable="true"
+              android:background="@drawable/focus_highlight"
+              android:layout_marginVertical="2dp">
+
+              <TextView
+                  android:id="@+id/txt_name"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"
+                  android:textColor="#FFF"
+                  android:textSize="15sp"
+                  android:gravity="right"
+                  android:paddingRight="12dp"
+                  android:textStyle="bold"/>
+
+              <ImageView
+                  android:id="@+id/img_logo"
+                  android:layout_width="40dp"
+                  android:layout_height="40dp"
+                  android:scaleType="centerInside"/>
+          </LinearLayout>
+          EOF
+
+          cat <<EOF > app/src/main/res/layout/item_card.xml
+          <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="220dp"
+              android:layout_margin="8dp"
+              
