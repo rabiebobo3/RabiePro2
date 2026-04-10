@@ -1,4 +1,4 @@
-name: Rabie_Pro_V43_Dual_Players
+name: Rabie_Pro_V43_Dual_Players_Fixed
 on: [push]
 jobs:
   build:
@@ -8,11 +8,13 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_With_VLC_And_ExoPlayer
+      - name: Build_With_VLC_And_ExoPlayer_Fixed
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "android.useAndroidX=true" > gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
+          echo "org.gradle.daemon=false" >> gradle.properties
           
           cat <<EOF > settings.gradle
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
@@ -81,7 +83,7 @@ jobs:
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
                               <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
                                   <androidx.media3.ui.PlayerView android:id="@+id/small_player_exo" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
-                                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/small_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                                  <SurfaceView android:id="@+id/small_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
                                   <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
                               </FrameLayout>
                           </androidx.cardview.widget.CardView>
@@ -97,7 +99,7 @@ jobs:
 
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
                   <androidx.media3.ui.PlayerView android:id="@+id/full_player_exo" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
-                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/full_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                  <SurfaceView android:id="@+id/full_player_vlc" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
                   
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
                       <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
@@ -209,7 +211,7 @@ jobs:
                       <TextView
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:text="🔇 تشغيل صامت عند بدء التطبيق"
+                          android:text="🔇 منع التشغيل التلقائي"
                           android:textColor="#FFF"
                           android:textSize="18sp"
                           android:textStyle="bold"/>
@@ -217,7 +219,7 @@ jobs:
                       <TextView
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:text="منع التشغيل التلقائي في الخلفية"
+                          android:text="إيقاف التشغيل في الخلفية"
                           android:textColor="#AAA"
                           android:textSize="13sp"
                           android:layout_marginTop="5dp"/>
@@ -279,12 +281,9 @@ jobs:
           import com.google.android.gms.cast.framework.*;
           import androidx.mediarouter.app.MediaRouteButton;
           import org.videolan.libvlc.*;
-          import org.videolan.libvlc.util.VLCVideoLayout;
+          import org.videolan.libvlc.interfaces.IVLCVout;
 
           public class MainActivity extends AppCompatActivity {
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🎬 نظام المشغلات المزدوج: ExoPlayer + VLC
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private ExoPlayer exoPlayer;
               private LibVLC libVLC;
               private org.videolan.libvlc.MediaPlayer vlcPlayer;
@@ -300,7 +299,7 @@ jobs:
               private RecyclerView rvG, rvI;
               private TextView tTitle, tTime, tFullChName, txtPlayerType;
               private PlayerView smallPVExo, fullPVExo;
-              private VLCVideoLayout smallPVVlc, fullPVVlc;
+              private SurfaceView smallPVVlc, fullPVVlc;
               private View mainUI, fullCont, overlay, vodControls, splash, infoBar, leftSide;
               private ImageView fullChLogo, fullFavBtn;
               private SeekBar seekBar;
@@ -341,9 +340,6 @@ jobs:
                       mainUI.setVisibility(View.VISIBLE); 
                   }, 2000);
 
-                  // ═══════════════════════════════════════════════════════════════════════════════════
-                  // 🎯 تهيئة المشغلات
-                  // ═══════════════════════════════════════════════════════════════════════════════════
                   smallPVExo = findViewById(R.id.small_player_exo);
                   fullPVExo = findViewById(R.id.full_player_exo);
                   smallPVVlc = findViewById(R.id.small_player_vlc);
@@ -397,9 +393,6 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🎬 تهيئة ExoPlayer
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void initExoPlayer() {
                   DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory()
                       .setConnectTimeoutMs(15000)
@@ -408,7 +401,6 @@ jobs:
                       .setUserAgent("Mozilla/5.0");
 
                   DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpFactory);
-
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                       .setBufferDurationsMs(30000, 90000, 2000, 3000)
                       .setBackBuffer(20000, true)
@@ -443,68 +435,51 @@ jobs:
 
                       @Override
                       public void onPlayerError(PlaybackException error) {
-                          Toast.makeText(MainActivity.this, "خطأ ExoPlayer - جرب VLC من الإعدادات", Toast.LENGTH_LONG).show();
+                          Toast.makeText(MainActivity.this, "خطأ ExoPlayer - جرب VLC", Toast.LENGTH_SHORT).show();
                       }
                   });
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🎬 تهيئة VLC Player
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void initVLCPlayer() {
                   try {
                       ArrayList<String> options = new ArrayList<>();
                       options.add("--aout=opensles");
                       options.add("--audio-time-stretch");
-                      options.add("-vvv");
-                      options.add("--network-caching=10000");
-                      options.add("--file-caching=10000");
-                      options.add("--live-caching=10000");
+                      options.add("--network-caching=5000");
                       options.add("--http-reconnect");
-                      options.add("--no-drop-late-frames");
-                      options.add("--no-skip-frames");
 
                       libVLC = new LibVLC(this, options);
                       vlcPlayer = new org.videolan.libvlc.MediaPlayer(libVLC);
 
-                      vlcPlayer.setEventListener(new org.videolan.libvlc.MediaPlayer.EventListener() {
-                          @Override
-                          public void onEvent(org.videolan.libvlc.MediaPlayer.Event event) {
-                              runOnUiThread(() -> {
-                                  switch (event.type) {
-                                      case org.videolan.libvlc.MediaPlayer.Event.Buffering:
-                                          float percent = event.getBuffering();
-                                          if (percent < 100) {
-                                              ps.setVisibility(View.VISIBLE);
-                                              pf.setVisibility(View.VISIBLE);
-                                          } else {
-                                              ps.setVisibility(View.GONE);
-                                              pf.setVisibility(View.GONE);
-                                          }
-                                          break;
-                                      case org.videolan.libvlc.MediaPlayer.Event.Playing:
-                                          ps.setVisibility(View.GONE);
-                                          pf.setVisibility(View.GONE);
-                                          btnPP.setImageResource(android.R.drawable.ic_media_pause);
-                                          break;
-                                      case org.videolan.libvlc.MediaPlayer.Event.Paused:
-                                          btnPP.setImageResource(android.R.drawable.ic_media_play);
-                                          break;
-                                      case org.videolan.libvlc.MediaPlayer.Event.EncounteredError:
-                                          Toast.makeText(MainActivity.this, "خطأ VLC - جرب ExoPlayer", Toast.LENGTH_SHORT).show();
-                                          break;
+                      vlcPlayer.setEventListener(event -> runOnUiThread(() -> {
+                          switch (event.type) {
+                              case org.videolan.libvlc.MediaPlayer.Event.Buffering:
+                                  if (event.getBuffering() < 100) {
+                                      ps.setVisibility(View.VISIBLE);
+                                      pf.setVisibility(View.VISIBLE);
+                                  } else {
+                                      ps.setVisibility(View.GONE);
+                                      pf.setVisibility(View.GONE);
                                   }
-                              });
+                                  break;
+                              case org.videolan.libvlc.MediaPlayer.Event.Playing:
+                                  ps.setVisibility(View.GONE);
+                                  pf.setVisibility(View.GONE);
+                                  btnPP.setImageResource(android.R.drawable.ic_media_pause);
+                                  break;
+                              case org.videolan.libvlc.MediaPlayer.Event.Paused:
+                                  btnPP.setImageResource(android.R.drawable.ic_media_play);
+                                  break;
+                              case org.videolan.libvlc.MediaPlayer.Event.EncounteredError:
+                                  Toast.makeText(MainActivity.this, "خطأ VLC", Toast.LENGTH_SHORT).show();
+                                  break;
                           }
-                      });
+                      }));
                   } catch (Exception e) {
                       Toast.makeText(this, "فشل تهيئة VLC", Toast.LENGTH_SHORT).show();
                   }
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // ⚙️ نافذة الإعدادات
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void showSettingsDialog() {
                   Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
                   dialog.setContentView(R.layout.dialog_settings);
@@ -539,9 +514,6 @@ jobs:
                   dialog.show();
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🎮 التحكم في المشغلات
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void setupPlayerControls() {
                   btnPP.setOnClickListener(v -> {
                       if (useVLC) {
@@ -583,9 +555,6 @@ jobs:
                   });
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // ▶️ تشغيل القناة/الفيديو
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void playChannel(Ch c, int pos, boolean doubleClick) {
                   currentCh = c;
                   savedItemIndex = pos;
@@ -633,12 +602,13 @@ jobs:
                   try {
                       Media media = new Media(libVLC, Uri.parse(url));
                       media.setHWDecoderEnabled(true, false);
-                      media.addOption(":network-caching=10000");
-                      media.addOption(":file-caching=10000");
-                      media.addOption(":live-caching=10000");
                       
                       vlcPlayer.setMedia(media);
                       media.release();
+
+                      IVLCVout vout = vlcPlayer.getVLCVout();
+                      vout.setVideoView(fullCont.getVisibility() == View.VISIBLE ? fullPVVlc : smallPVVlc);
+                      vout.attachViews();
                       
                       long pos = prefs.getLong(url, 0);
                       if (pos > 0 && !currentMode.equals("live")) {
@@ -649,7 +619,7 @@ jobs:
                           vlcPlayer.play();
                       }
                   } catch (Exception e) {
-                      Toast.makeText(this, "خطأ في تشغيل VLC", Toast.LENGTH_SHORT).show();
+                      Toast.makeText(this, "خطأ VLC", Toast.LENGTH_SHORT).show();
                   }
               }
 
@@ -660,20 +630,21 @@ jobs:
                   }
                   if (vlcPlayer != null && vlcPlayer.isPlaying()) {
                       vlcPlayer.stop();
+                      IVLCVout vout = vlcPlayer.getVLCVout();
+                      vout.detachViews();
                   }
               }
 
-              // ═══════════════════════════════════════════════════════════════════════════════════
-              // 🔄 التبديل بين الشاشات
-              // ═══════════════════════════════════════════════════════════════════════════════════
               private void toggleFull(boolean full) {
                   if (full) {
                       mainUI.setVisibility(View.GONE);
                       fullCont.setVisibility(View.VISIBLE);
                       
                       if (useVLC) {
-                          vlcPlayer.detachViews();
-                          vlcPlayer.attachViews(fullPVVlc, null, false, false);
+                          IVLCVout vout = vlcPlayer.getVLCVout();
+                          vout.detachViews();
+                          vout.setVideoView(fullPVVlc);
+                          vout.attachViews();
                           fullPVVlc.setVisibility(View.VISIBLE);
                           fullPVExo.setVisibility(View.GONE);
                       } else {
@@ -690,8 +661,10 @@ jobs:
                       mainUI.setVisibility(View.VISIBLE);
                       
                       if (useVLC) {
-                          vlcPlayer.detachViews();
-                          vlcPlayer.attachViews(smallPVVlc, null, false, false);
+                          IVLCVout vout = vlcPlayer.getVLCVout();
+                          vout.detachViews();
+                          vout.setVideoView(smallPVVlc);
+                          vout.attachViews();
                       } else {
                           PlayerView.switchTargetView(exoPlayer, fullPVExo, smallPVExo);
                       }
@@ -748,6 +721,7 @@ jobs:
                   }
                   
                   if (vlcPlayer != null) {
+                      vlcPlayer.getVLCVout().detachViews();
                       vlcPlayer.release();
                       vlcPlayer = null;
                   }
@@ -1074,7 +1048,7 @@ jobs:
           EOF
           
           cat <<EOF > app/src/main/res/drawable/round_btn_orange.xml
-          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#ff9100"/><elevation android:value="6dp"/></shape>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#ff9100"/></shape>
           EOF
           
           cat <<EOF > app/src/main/res/drawable/tab_button_style.xml
@@ -1133,9 +1107,15 @@ jobs:
                   minSdk 21
                   targetSdk 34
                   versionCode 43
-                  versionName "43.0.DualPlayer"
+                  versionName "43.0"
+                  ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
               }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+              packagingOptions {
+                  resources {
+                      excludes += ['META-INF/INDEX.LIST', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA']
+                  }
+              }
           }
           dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -1150,10 +1130,8 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              implementation 'org.videolan.android:libvlc-all:3.5.1'
-              constraints { 
-                  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10")
-                  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") 
+              implementation('org.videolan.android:libvlc-all:3.5.1') {
+                  exclude group: 'androidx.lifecycle'
               }
           }
           EOF
@@ -1194,8 +1172,8 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Upload_Dual_Player_APK
+      - name: Upload_Fixed_APK
         uses: actions/upload-artifact@v4
         with: 
-          name: Rabie_Pro_V43_VLC_ExoPlayer
+          name: Rabie_Pro_V43_VLC_Fixed
           path: app/build/outputs/apk/debug/*.apk
