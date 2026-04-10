@@ -10,16 +10,14 @@ jobs:
 
       - name: Build_V41_Ultimate_Fixed
         run: |
-          # تنظيف البيئة قبل البدء
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           
-          # 1. إعدادات الذاكرة وحل تعارض كوتلن (إصلاح Duplicate Class)
+          # إعدادات الذاكرة وحل تعارض كوتلن نهائياً
           echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" > gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           echo "kotlin.stdlib.default.dependency=false" >> gradle.properties
           
-          # 2. إعداد المستودعات (Settings)
           cat <<EOF > settings.gradle
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
@@ -29,17 +27,14 @@ jobs:
           include ':app'
           EOF
 
-          # 3. إنشاء هيكل المجلدات
           mkdir -p app/src/main/java/com/rabie/iptv app/src/main/res/layout app/src/main/res/drawable app/src/main/res/xml app/src/main/res/mipmap-hdpi app/src/main/res/mipmap-xhdpi app/src/main/res/mipmap-xxhdpi app/src/main/res/mipmap-xxxhdpi app/src/main/res/values
           
-          # تحميل الشعارات والأيقونات
           curl -Lo app/src/main/res/mipmap-hdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/mipmap-xxxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          # 4. ملفات الموارد (XML)
           cat <<EOF > app/src/main/res/values/colors.xml
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
@@ -56,7 +51,6 @@ jobs:
 
           echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
 
-          # (تم دمج تخطيط الواجهة activity_main.xml الذي قدمته بالكامل)
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -131,7 +125,6 @@ jobs:
           </RelativeLayout>
           EOF
 
-          # 5. الكود البرمجي (Java) - نسخة مجمعة ومحدثة
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Intent;
@@ -401,7 +394,6 @@ jobs:
           }
           EOF
 
-          # 6. ملفات التصميم الإضافية (Drawables)
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
@@ -436,7 +428,6 @@ jobs:
           </androidx.cardview.widget.CardView>
           EOF
 
-          # 7. ملف CastOptionsProvider للمشاركة (Casting)
           cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
           package com.rabie.iptv;
           import android.content.Context;
@@ -448,7 +439,6 @@ jobs:
           }
           EOF
 
-          # 8. ملف بناء التطبيق الرئيسي (Gradle) - تم حل مشكلة VLC و Kotlin
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
@@ -475,14 +465,13 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              # استبعاد كوتلن من مكتبة VLC لمنع التعارض
+              // حل تعارض VLC باستبعاد مكتبات كوتلن المتكررة
               implementation ('org.videolan.android:libvlc-all:3.6.0-eap11') {
                   exclude group: 'org.jetbrains.kotlin'
               }
           }
           EOF
 
-          # 9. ملف Manifest الأساسي
           echo '<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
@@ -495,7 +484,6 @@ jobs:
               </application>
           </manifest>' > app/src/main/AndroidManifest.xml
           
-          # 10. تشغيل البناء
           gradle wrapper --gradle-version 8.5
           chmod +x gradlew
           ./gradlew :app:assembleDebug --no-daemon
