@@ -11,7 +11,9 @@ jobs:
       - name: Build_V41_Ultimate_With_Icon
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
-          echo "android.useAndroidX=true" > gradle.properties
+          # اصلاح مشكلة الذاكرة OutOfMemoryError
+          echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" > gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
           cat <<EOF > settings.gradle
@@ -216,7 +218,10 @@ jobs:
                           if (s == Player.STATE_READY) { isRetrying = false; if (currentCh != null) savePos(); }
                           if (s == Player.STATE_IDLE && currentCh != null && !isRetrying) { retryPlayback(); }
                       }
-                      public void onPlayerError(PlaybackException error) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); retryPlayback(); }
+                      public void onPlayerError(PlaybackException error) {
+                          ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                          retryPlayback();
+                      }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
 
@@ -278,14 +283,28 @@ jobs:
                   return super.onKeyDown(keyCode, event);
               }
 
-              private void showOverlay() { overlay.setVisibility(View.VISIBLE); vodControls.setVisibility(currentMode.equals("live") ? View.GONE : View.VISIBLE); handler.removeCallbacks(hideOverlay); handler.postDelayed(hideOverlay, 5000); }
+              private void showOverlay() {
+                  overlay.setVisibility(View.VISIBLE);
+                  vodControls.setVisibility(currentMode.equals("live") ? View.GONE : View.VISIBLE);
+                  handler.removeCallbacks(hideOverlay);
+                  handler.postDelayed(hideOverlay, 5000);
+              }
+
               private void toggleFull(boolean full) {
                   if (full) { 
                       mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE); 
-                      PlayerView.switchTargetView(player, smallPV, fullPV); showOverlay(); showInfobar(); fullCont.requestFocus();
+                      PlayerView.switchTargetView(player, smallPV, fullPV); showOverlay(); showInfobar(); 
+                      fullCont.requestFocus();
                   } else { 
-                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); PlayerView.switchTargetView(player, fullPV, smallPV);
-                      if (savedItemIndex != -1) { rvI.postDelayed(() -> { rvI.scrollToPosition(savedItemIndex); RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex); if (vh != null) vh.itemView.requestFocus(); }, 150); }
+                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); 
+                      PlayerView.switchTargetView(player, fullPV, smallPV);
+                      if (savedItemIndex != -1) {
+                          rvI.postDelayed(() -> {
+                              rvI.scrollToPosition(savedItemIndex);
+                              RecyclerView.ViewHolder vh = rvI.findViewHolderForAdapterPosition(savedItemIndex);
+                              if (vh != null) vh.itemView.requestFocus();
+                          }, 150);
+                      }
                   }
               }
 
@@ -303,29 +322,66 @@ jobs:
               private void playNext() { int i = currentItems.indexOf(currentCh); if(i != -1 && i < currentItems.size()-1) playChannel(currentItems.get(i+1), i+1, true); }
               private void playPrev() { int i = currentItems.indexOf(currentCh); if(i > 0) playChannel(currentItems.get(i-1), i-1, true); }
 
-              private String getT(Ch c) { String g = c.g.toLowerCase(); if ("1".equals(c.isF)) return "series"; if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie"; if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series"; return "live"; }
+              private String getT(Ch c) { 
+                  String g = c.g.toLowerCase();
+                  if ("1".equals(c.isF)) return "series";
+                  if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie";
+                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series";
+                  return "live";
+              }
+
               private void setMode(String m) {
                   currentMode = m; historyStack.clear();
                   LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) rvI.getLayoutParams();
-                  if (m.equals("live")) { leftSide.setVisibility(View.VISIBLE); params.weight = 0.55f; rvI.setLayoutManager(new LinearLayoutManager(this)); } else { leftSide.setVisibility(View.GONE); params.weight = 0.80f; rvI.setLayoutManager(new GridLayoutManager(this, 5)); }
+                  if (m.equals("live")) {
+                      leftSide.setVisibility(View.VISIBLE); params.weight = 0.55f;
+                      rvI.setLayoutManager(new LinearLayoutManager(this));
+                  } else {
+                      leftSide.setVisibility(View.GONE); params.weight = 0.80f;
+                      rvI.setLayoutManager(new GridLayoutManager(this, 5));
+                  }
                   rvI.setLayoutParams(params);
                   if(m.equals("fav")) { currentItems = new ArrayList<>(favList); rvG.setVisibility(View.GONE); rvI.setAdapter(new ItemAdapter(currentItems)); return; }
                   rvG.setVisibility(View.VISIBLE);
                   Map<String, List<Ch>> d = m.equals("movie") ? movie : (m.equals("series") ? series : live);
-                  List<String> groups = new ArrayList<>(d.keySet()); rvG.setAdapter(new GroupAdapter(groups));
+                  List<String> groups = new ArrayList<>(d.keySet());
+                  rvG.setAdapter(new GroupAdapter(groups));
                   if (!groups.isEmpty()) { currentCat = groups.get(0); renderGallery("root"); }
               }
 
-              private void renderGallery(String pid) { currentParentId = pid; List<Ch> filtered = new ArrayList<>(); for (Ch i : database) if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid)) filtered.add(i); currentItems = filtered; rvI.setAdapter(new ItemAdapter(currentItems)); rvI.postDelayed(() -> { if(rvI.getChildCount() > 0) rvI.getChildAt(0).requestFocus(); }, 200); }
-              private void toggleFav() { if (currentCh == null) return; int idx = -1; for (int i=0; i<favList.size(); i++) if(favList.get(i).u.equals(currentCh.u)) idx = i; if (idx != -1) favList.remove(idx); else favList.add(currentCh); getSharedPreferences("p", MODE_PRIVATE).edit().putString("f", new Gson().toJson(favList)).apply(); updateFavIcon(); }
-              private void updateFavIcon() { boolean isFav = false; if (currentCh != null) for (Ch f : favList) if(f.u.equals(currentCh.u)) isFav = true; fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off); }
+              private void renderGallery(String pid) {
+                  currentParentId = pid; List<Ch> filtered = new ArrayList<>();
+                  for (Ch i : database) if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid)) filtered.add(i);
+                  currentItems = filtered; rvI.setAdapter(new ItemAdapter(currentItems));
+                  rvI.postDelayed(() -> { if(rvI.getChildCount() > 0) rvI.getChildAt(0).requestFocus(); }, 200);
+              }
+
+              private void toggleFav() {
+                  if (currentCh == null) return;
+                  int idx = -1; for (int i=0; i<favList.size(); i++) if(favList.get(i).u.equals(currentCh.u)) idx = i;
+                  if (idx != -1) favList.remove(idx); else favList.add(currentCh);
+                  getSharedPreferences("p", MODE_PRIVATE).edit().putString("f", new Gson().toJson(favList)).apply();
+                  updateFavIcon();
+              }
+
+              private void updateFavIcon() {
+                  boolean isFav = false; if (currentCh != null) for (Ch f : favList) if(f.u.equals(currentCh.u)) isFav = true;
+                  fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off);
+              }
 
               private Runnable hideOverlay = () -> overlay.setVisibility(View.GONE);
               private void showInfobar() { infoBar.setVisibility(View.VISIBLE); handler.removeCallbacks(hideInfobar); handler.postDelayed(hideInfobar, 4000); }
               private Runnable hideInfobar = () -> infoBar.setVisibility(View.GONE);
 
-              private void updateProgress() { if (player != null && !currentMode.equals("live")) { long dur = player.getDuration(), pos = player.getCurrentPosition(); if (dur > 0) { seekBar.setMax((int) dur); seekBar.setProgress((int) pos); tTime.setText(formatTime(pos) + " / " + formatTime(dur)); } } handler.postDelayed(this::updateProgress, 1000); }
+              private void updateProgress() {
+                  if (player != null && !currentMode.equals("live")) {
+                      long dur = player.getDuration(), pos = player.getCurrentPosition();
+                      if (dur > 0) { seekBar.setMax((int) dur); seekBar.setProgress((int) pos); tTime.setText(formatTime(pos) + " / " + formatTime(dur)); }
+                  }
+                  handler.postDelayed(this::updateProgress, 1000);
+              }
               private String formatTime(long ms) { long s=(ms/1000)%60, m=(ms/60000)%60, h=(ms/3600000); return h>0?String.format("%02d:%02d:%02d",h,m,s):String.format("%02d:%02d",m,s); }
+
               private void loadData() { String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u"; Volley.newRequestQueue(this).add(new StringRequest(Request.Method.GET, url, res -> { parse(res); setMode("live"); }, null)); }
               private void loadFavs() { String j = getSharedPreferences("p", MODE_PRIVATE).getString("f", "[]"); favList = new Gson().fromJson(j, new TypeToken<List<Ch>>(){}.getType()); if(favList == null) favList = new ArrayList<>(); }
 
@@ -354,7 +410,11 @@ jobs:
               class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.VH> {
                   List<String> g; GroupAdapter(List<String> g) { this.g = g; }
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
-                  public void onBindViewHolder(VH h, int i) { h.n.setText(g.get(i)); h.itemView.setFocusable(true); h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f)); h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); }); }
+                  public void onBindViewHolder(VH h, int i) {
+                      h.n.setText(g.get(i)); h.itemView.setFocusable(true); 
+                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.05f:1f));
+                      h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); });
+                  }
                   public int getItemCount() { return g.size(); }
                   class VH extends RecyclerView.ViewHolder { TextView n; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); } }
               }
@@ -365,8 +425,12 @@ jobs:
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(t==0?R.layout.item_channel:R.layout.item_card, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
                       Ch c = items.get(i); h.n.setText(c.n); Glide.with(h.itemView).load(c.l).into(h.img);
-                      h.itemView.setFocusable(true); h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
-                      h.itemView.setOnClickListener(v -> { if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); savedItemIndex = 0; } else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); } });
+                      h.itemView.setFocusable(true);
+                      h.itemView.setOnFocusChangeListener((v,f)-> v.setScaleX(f?1.08f:1f));
+                      h.itemView.setOnClickListener(v -> {
+                          if ("1".equals(c.isF)) { historyStack.push(currentParentId); renderGallery(c.id); savedItemIndex = 0; }
+                          else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); }
+                      });
                   }
                   public int getItemCount() { return items.size(); }
                   class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
@@ -449,7 +513,7 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              // إضافة مكتبة VLC المطلوبة
+              // إضافة مكتبة VLC المدمجة
               implementation 'org.videolan.android:libvlc-all:3.6.0-eap11'
               constraints { implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10"); implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10") }
           }
