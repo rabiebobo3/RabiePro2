@@ -1,4 +1,4 @@
-name: Rabie_Pro_V52_Final_Fix
+name: Rabie_Pro_V53_Final_Final
 on: [push]
 
 jobs:
@@ -11,35 +11,32 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Force Project Structure
+      - name: Create Everything From Scratch
         run: |
+          # 1. إنشاء المجلدات
           mkdir -p app/src/main/java/com/rabie/iptv
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/values
 
-          # 1. إعداد الـ Repositories في settings.gradle (الطريقة الحديثة)
+          # 2. إنشاء ملفات الإعدادات (Core Configuration)
           cat <<EOF > settings.gradle
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral() }
-          }
+          rootProject.name = "RabiePro"
           include ':app'
           EOF
 
-          # 2. ملف build.gradle الرئيسي (فارغ ومنظم)
           cat <<EOF > build.gradle
-          plugins {
-              id 'com.android.application' version '8.2.2' apply false
-              id 'com.android.library' version '8.2.2' apply false
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
+          }
+          allprojects {
+              repositories { google(); mavenCentral() }
           }
           EOF
 
-          # 3. ملف build.gradle الخاص بالتطبيق (هنا السر)
+          # 3. ملف بناء التطبيق (App Level)
           cat <<EOF > app/build.gradle
-          plugins { id 'com.android.application' }
+          apply plugin: 'com.android.application'
           android {
               namespace 'com.rabie.iptv'
               compileSdk 34
@@ -47,11 +44,9 @@ jobs:
                   applicationId "com.rabie.iptv"
                   minSdk 21
                   targetSdk 34
-                  versionCode 52
-                  versionName "5.2"
+                  versionCode 53
+                  versionName "5.3"
               }
-              buildTypes { release { minifyEnabled false } }
-              compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
           dependencies {
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -60,7 +55,7 @@ jobs:
           }
           EOF
 
-          # 4. ملف الـ Manifest
+          # 4. المانيفست والكود
           echo '<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
@@ -71,26 +66,22 @@ jobs:
               </application>
           </manifest>' > app/src/main/AndroidManifest.xml
 
-          # 5. الكود المصدري الكامل (Java)
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.os.Bundle;
           import androidx.appcompat.app.AppCompatActivity;
           public class MainActivity extends AppCompatActivity {
-              @Override protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-                  setContentView(android.R.layout.simple_list_item_1);
-              }
+              @Override protected void onCreate(Bundle s) { super.onCreate(s); setContentView(android.R.layout.simple_list_item_1); }
           }
           EOF
 
-      - name: Build with Power
+      - name: Build With Embedded Gradle
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          # هنا السر: نستخدم gradle المنصب في النظام مباشرة بدل الـ wrapper المفقود
+          gradle assembleDebug --stacktrace
 
       - name: Export APK
         uses: actions/upload-artifact@v4
         with:
-          name: Rabie_Pro_V52_Final
+          name: Rabie_Pro_V53
           path: app/build/outputs/apk/debug/*.apk
