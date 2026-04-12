@@ -178,8 +178,6 @@ jobs:
               private Handler handler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private SharedPreferences settingsPref;
-              
-              // Variables for Stall Watcher
               private long lastPosition = 0;
               private int stallCount = 0;
 
@@ -230,7 +228,9 @@ jobs:
                           case MediaPlayer.Event.Playing:
                               runOnUiThread(() -> {
                                   ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
-                                  if (fullCont.getVisibility() == View.VISIBLE) vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
+                                  if (fullCont.getVisibility() == View.VISIBLE) {
+                                      vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
+                                  }
                               });
                               break;
                           case MediaPlayer.Event.EncounteredError: forceReload(); break;
@@ -280,10 +280,7 @@ jobs:
                                       ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
                                       if (stallCount >= 10) { forceReload(); stallCount = 0; }
                                   }
-                              } else {
-                                  stallCount = 0;
-                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
-                              }
+                              } else { stallCount = 0; ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); }
                               lastPosition = currentPos;
                           }
                           handler.postDelayed(this, 500);
@@ -298,11 +295,9 @@ jobs:
               }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
-                  // Resume Play Logic
                   long savedPos = settingsPref.getLong("pos_" + c.u, 0);
                   currentCh = c;
                   tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
-
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
                       ps.setVisibility(View.VISIBLE);
@@ -311,11 +306,9 @@ jobs:
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
                       vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
                       vlcMediaPlayer.detachViews();
-                      vlcMediaPlayer.attachViews(targetVlc, null, false, false);
+                      vlcMediaPlayer.attachViews(targetVlc, null, true, false);
                       Media m = new Media(libVLC, Uri.parse(c.u));
-                      vlcMediaPlayer.setMedia(m);
-                      m.release();
-                      vlcMediaPlayer.play();
+                      vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
                       if (savedPos > 0 && !getT(c).equals("live")) vlcMediaPlayer.setTime(savedPos);
                   } else {
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
@@ -323,12 +316,41 @@ jobs:
                       if (targetView == smallPV) { fullPV.setPlayer(null); smallPV.setPlayer(player); }
                       else { smallPV.setPlayer(null); fullPV.setPlayer(player); }
                       targetView.setVisibility(View.VISIBLE);
-                      player.setMediaItem(MediaItem.fromUri(c.u));
-                      player.prepare();
+                      player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare();
                       if (savedPos > 0 && !getT(c).equals("live")) player.seekTo(savedPos);
                       player.play();
                   }
                   if (doubleClick || !getT(c).equals("live")) toggleFull(true);
+              }
+
+              private void toggleFull(boolean full) {
+                  if (full) {
+                      mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
+                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
+                          vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcFull, null, true, false);
+                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
+                          handler.postDelayed(() -> vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL), 150);
+                      } else PlayerView.switchTargetView(player, smallPV, fullPV);
+                      showOverlay(); fullCont.requestFocus();
+                  } else {
+                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
+                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
+                          vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcSmall, null, true, false);
+                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
+                      } else PlayerView.switchTargetView(player, fullPV, smallPV);
+                  }
+              }
+
+              @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
+                  if (fullCont.getVisibility() == View.VISIBLE) {
+                      showOverlay();
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_CENTER || keyCode == KeyEvent.KEYCODE_ENTER) { togglePlay(); return true; }
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) { seek(-10000); return true; }
+                      if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) { seek(10000); return true; }
+                  }
+                  return super.onKeyDown(keyCode, event);
               }
 
               @Override protected void onPause() {
@@ -337,39 +359,13 @@ jobs:
                       long pos = currentPlayerMode.equals("ExoPlayer") ? player.getCurrentPosition() : vlcMediaPlayer.getTime();
                       settingsPref.edit().putLong("pos_" + currentCh.u, pos).apply();
                   }
-                  player.pause(); vlcMediaPlayer.pause(); // No Background Play
+                  player.pause(); vlcMediaPlayer.pause();
               }
-
               @Override protected void onResume() { super.onResume(); hideSystemUI(); }
 
               private void showSettings() {
                   String[] modes = {"ExoPlayer", "VLC Player (Internal)"};
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                      .setTitle("اختر المشغل")
-                      .setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> {
-                          currentPlayerMode = modes[i];
-                          settingsPref.edit().putString("player_type", currentPlayerMode).apply();
-                          d.dismiss();
-                      }).show();
-              }
-
-              private void toggleFull(boolean full) {
-                  if (full) {
-                      mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
-                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
-                          vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE);
-                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcFull, null, false, false);
-                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
-                      } else PlayerView.switchTargetView(player, smallPV, fullPV);
-                      showOverlay(); fullCont.requestFocus();
-                  } else {
-                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
-                      if (currentPlayerMode.equals("VLC Player (Internal)")) {
-                          vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE);
-                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcSmall, null, false, false);
-                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
-                      } else PlayerView.switchTargetView(player, fullPV, smallPV);
-                  }
+                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("اختر المشغل").setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> { currentPlayerMode = modes[i]; settingsPref.edit().putString("player_type", currentPlayerMode).apply(); d.dismiss(); }).show();
               }
 
               private String getT(Ch c) {
@@ -388,9 +384,8 @@ jobs:
               }
 
               private void togglePlay() {
-                  if (currentPlayerMode.equals("VLC Player (Internal)")) {
-                      if (vlcMediaPlayer.isPlaying()) vlcMediaPlayer.pause(); else vlcMediaPlayer.play();
-                  } else { if (player.isPlaying()) player.pause(); else player.play(); }
+                  if (currentPlayerMode.equals("VLC Player (Internal)")) { if (vlcMediaPlayer.isPlaying()) vlcMediaPlayer.pause(); else vlcMediaPlayer.play(); }
+                  else { if (player.isPlaying()) player.pause(); else player.play(); }
               }
 
               private void seek(long ms) {
@@ -464,9 +459,16 @@ jobs:
               class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.VH> {
                   List<String> g; GroupAdapter(List<String> g) { this.g = g; }
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
-                  public void onBindViewHolder(VH h, int i) { h.n.setText(g.get(i)); h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); }); }
+                  public void onBindViewHolder(VH h, int i) {
+                      h.n.setText(g.get(i));
+                      h.itemView.setOnFocusChangeListener((v, hasFocus) -> {
+                          if (hasFocus) { v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start(); v.setBackgroundResource(R.drawable.round_btn_orange); }
+                          else { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start(); v.setBackgroundResource(R.drawable.tab_button_style); }
+                      });
+                      h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); });
+                  }
                   public int getItemCount() { return g.size(); }
-                  class VH extends RecyclerView.ViewHolder { TextView n; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); } }
+                  class VH extends RecyclerView.ViewHolder { TextView n; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); v.setFocusable(true); } }
               }
 
               class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.VH> {
@@ -475,20 +477,18 @@ jobs:
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(t==0?R.layout.item_channel:R.layout.item_card, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
                       Ch c = items.get(i); h.n.setText(c.n); Glide.with(h.itemView).load(c.l).into(h.img);
+                      h.itemView.setOnFocusChangeListener((v, hasFocus) -> {
+                          if (hasFocus) { v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(200).start(); v.setElevation(20f); }
+                          else { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start(); v.setElevation(0f); }
+                      });
                       h.itemView.setOnClickListener(v -> {
                           if ("1".equals(c.isF)) { historyStack.push(c.pid); renderGallery(c.id); }
-                          else {
-                              long t = System.currentTimeMillis();
-                              boolean isDouble = (t - lastClickTime < 500);
-                              lastClickTime = t;
-                              playChannel(c, i, isDouble);
-                          }
+                          else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); }
                       });
                   }
                   public int getItemCount() { return items.size(); }
-                  class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); } }
+                  class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); v.setFocusable(true); } }
               }
-              
               private Runnable hideOverlay = () -> overlay.setVisibility(View.GONE);
               @Override protected void onDestroy() { super.onDestroy(); player.release(); vlcMediaPlayer.release(); libVLC.release(); }
           }
@@ -498,7 +498,7 @@ jobs:
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
           cat <<EOF > app/src/main/res/drawable/round_btn_orange.xml
-          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#ff9100"/><elevation android:value="6dp"/></shape>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#ff9100"/><corners android:radius="10dp"/></shape>
           EOF
           cat <<EOF > app/src/main/res/drawable/tab_button_style.xml
           <selector xmlns:android="http://schemas.android.com/apk/res/android">
@@ -513,13 +513,13 @@ jobs:
           </selector>
           EOF
           cat <<EOF > app/src/main/res/layout/item_channel.xml
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:focusable="true" android:background="@drawable/focus_highlight" android:layout_marginVertical="2dp">
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="12dp" android:focusable="true" android:clickable="true" android:background="@drawable/focus_highlight" android:layout_marginVertical="2dp">
               <TextView android:id="@+id/txt_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFF" android:textSize="15sp" android:gravity="right" android:paddingRight="12dp" android:textStyle="bold"/>
               <ImageView android:id="@+id/img_logo" android:layout_width="40dp" android:layout_height="40dp" android:scaleType="centerInside"/>
           </LinearLayout>
           EOF
           cat <<EOF > app/src/main/res/layout/item_card.xml
-          <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="220dp" android:layout_margin="8dp" app:cardCornerRadius="14dp" app:cardElevation="10dp" android:focusable="true" android:background="@drawable/focus_highlight">
+          <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="220dp" android:layout_margin="8dp" app:cardCornerRadius="14dp" app:cardElevation="10dp" android:focusable="true" android:clickable="true" android:background="@drawable/focus_highlight">
               <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
                   <ImageView android:id="@+id/img_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
                   <View android:layout_width="match_parent" android:layout_height="60dp" android:layout_alignParentBottom="true" android:background="#E6000000"/>
@@ -570,12 +570,14 @@ jobs:
 
           echo '<?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-feature android:name="android.software.leanback" android:required="false" />
+              <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml/network_security_config" android:label="@string/app_name" android:icon="@mipmap/ic_launcher">
+              <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml/network_security_config" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:banner="@drawable/app_logo">
                   <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
                   <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation">
-                      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+                      <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent-filter>
                   </activity>
               </application>
           </manifest>' > app/src/main/AndroidManifest.xml
