@@ -79,9 +79,11 @@ jobs:
                   <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
                       <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
-                              <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
-                              <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                              <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                              <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
+                                  <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false" app:resize_mode="fit"/>
+                                  <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                                  <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                              </FrameLayout>
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
                               <TextView android:id="@+id/txt_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="اختر محتوى" android:textColor="#ff9100" android:textSize="20sp" android:textStyle="bold" android:maxLines="1"/>
@@ -96,6 +98,7 @@ jobs:
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
                   <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
+                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
                       <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
                           <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
@@ -122,7 +125,6 @@ jobs:
                           </RelativeLayout>
                       </LinearLayout>
                   </LinearLayout>
-                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
               </FrameLayout>
           </RelativeLayout>
           EOF
@@ -174,7 +176,7 @@ jobs:
               private ImageView fullChLogo, fullFavBtn;
               private SeekBar seekBar;
               private ProgressBar ps, pf;
-              private ImageButton btnPP;
+              private ImageButton btnPP, btnRew, btnFfwd;
               private Handler handler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
               private SharedPreferences settingsPref;
@@ -202,6 +204,8 @@ jobs:
                   tTime = findViewById(R.id.txt_time); seekBar = findViewById(R.id.full_seekbar);
                   vodControls = findViewById(R.id.vod_controls); ps = findViewById(R.id.loading_s); pf = findViewById(R.id.loading_f);
                   btnPP = findViewById(R.id.btn_play_pause);
+                  btnRew = findViewById(R.id.btn_rew);
+                  btnFfwd = findViewById(R.id.btn_ffwd);
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
@@ -210,7 +214,9 @@ jobs:
                   player.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
                           int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
-                          ps.setVisibility(v); pf.setVisibility(v);
+                          if (!currentPlayerMode.equals("VLC Player (Internal)")) {
+                              ps.setVisibility(v); pf.setVisibility(v);
+                          }
                       }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                   });
@@ -219,27 +225,33 @@ jobs:
                   options.add("--file-caching=3000"); options.add("--network-caching=3000");
                   libVLC = new LibVLC(this, options);
                   vlcMediaPlayer = new MediaPlayer(libVLC);
-                  vlcMediaPlayer.setEventListener(event -> {
-                      switch (event.type) {
-                          case MediaPlayer.Event.Buffering:
-                              boolean isBuffering = event.getBuffering() < 100f;
-                              int v = isBuffering ? View.VISIBLE : View.GONE;
-                              ps.setVisibility(v); pf.setVisibility(v);
-                              break;
-                          case MediaPlayer.Event.Playing:
-                          case MediaPlayer.Event.Paused:
-                          case MediaPlayer.Event.Stopped:
-                          case MediaPlayer.Event.EncounteredError:
-                          case MediaPlayer.Event.EndReached:
-                              ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
-                              break;
+                  vlcMediaPlayer.setEventListener(new MediaPlayer.EventListener() {
+                      @Override
+                      public void onEvent(MediaPlayer.Event event) {
+                          if (event.type == MediaPlayer.Event.Buffering) {
+                              if (event.getBuffering() < 100) {
+                                  ps.setVisibility(View.VISIBLE);
+                                  pf.setVisibility(View.VISIBLE);
+                              } else {
+                                  ps.setVisibility(View.GONE);
+                                  pf.setVisibility(View.GONE);
+                              }
+                          }
+                          if (event.type == MediaPlayer.Event.Playing) {
+                              ps.setVisibility(View.GONE);
+                              pf.setVisibility(View.GONE);
+                              btnPP.setImageResource(android.R.drawable.ic_media_pause);
+                          }
+                          if (event.type == MediaPlayer.Event.Paused) {
+                              btnPP.setImageResource(android.R.drawable.ic_media_play);
+                          }
                       }
                   });
 
                   findViewById(R.id.btn_settings).setOnClickListener(v -> showSettings());
                   btnPP.setOnClickListener(v -> togglePlay());
-                  findViewById(R.id.btn_rew).setOnClickListener(v -> seek(-10000));
-                  findViewById(R.id.btn_ffwd).setOnClickListener(v -> seek(10000));
+                  btnRew.setOnClickListener(v -> seek(-10000));
+                  btnFfwd.setOnClickListener(v -> seek(10000));
                   findViewById(R.id.btn_next_item).setOnClickListener(v -> playNext());
                   findViewById(R.id.btn_prev_item).setOnClickListener(v -> playPrev());
                   findViewById(R.id.btn_dlna).setOnClickListener(v -> {
@@ -283,6 +295,9 @@ jobs:
                   currentCh = c;
                   tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
                   
+                  ps.setVisibility(View.VISIBLE);
+                  pf.setVisibility(View.VISIBLE);
+                  
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
@@ -304,34 +319,23 @@ jobs:
               }
 
               private void toggleFull(boolean full) {
-                  if (full) {
-                      mainUI.setVisibility(View.GONE);
-                      fullCont.setVisibility(View.VISIBLE);
+                  if (full) { 
+                      mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
                       if (currentPlayerMode.equals("VLC Player (Internal)")) {
-                          vlcSmall.setVisibility(View.GONE);
-                          vlcFull.setVisibility(View.VISIBLE);
-                          vlcMediaPlayer.detachViews();
-                          vlcMediaPlayer.attachViews(vlcFull, null, false, false);
-                          vlcMediaPlayer.setAspectRatio(null); // Fill the screen
+                          vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcFull, null, false, false);
                       } else {
-                          smallPV.setPlayer(null);
-                          fullPV.setPlayer(player);
+                          smallPV.setPlayer(null); fullPV.setPlayer(player);
                           PlayerView.switchTargetView(player, smallPV, fullPV);
                       }
-                      showOverlay();
-                      fullCont.requestFocus();
-                  } else {
-                      fullCont.setVisibility(View.GONE);
-                      mainUI.setVisibility(View.VISIBLE);
+                      showOverlay(); fullCont.requestFocus();
+                  } else { 
+                      fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
                       if (currentPlayerMode.equals("VLC Player (Internal)")) {
-                          vlcFull.setVisibility(View.GONE);
-                          vlcSmall.setVisibility(View.VISIBLE);
-                          vlcMediaPlayer.detachViews();
-                          vlcMediaPlayer.attachViews(vlcSmall, null, false, false);
-                          vlcMediaPlayer.setAspectRatio(""); // Reset to auto aspect ratio
+                          vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE);
+                          vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcSmall, null, false, false);
                       } else {
-                          fullPV.setPlayer(null);
-                          smallPV.setPlayer(player);
+                          fullPV.setPlayer(null); smallPV.setPlayer(player);
                           PlayerView.switchTargetView(player, fullPV, smallPV);
                       }
                   }
@@ -348,8 +352,11 @@ jobs:
               private void showOverlay() {
                   overlay.setVisibility(View.VISIBLE);
                   boolean isLive = currentCh != null && getT(currentCh).equals("live");
-                  // Hide all VOD controls (play/pause, seek, time, etc.) for live channels.
-                  vodControls.setVisibility(isLive ? View.GONE : View.VISIBLE);
+                  int vis = isLive ? View.GONE : View.VISIBLE;
+                  seekBar.setVisibility(vis);
+                  btnRew.setVisibility(vis);
+                  btnFfwd.setVisibility(vis);
+                  tTime.setVisibility(vis);
                   handler.removeCallbacks(hideOverlay);
                   handler.postDelayed(hideOverlay, 5000);
               }
