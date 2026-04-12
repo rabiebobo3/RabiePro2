@@ -82,7 +82,7 @@ jobs:
                               <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent">
                                   <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false" app:resize_mode="fit"/>
                                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                                  <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                                  <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:indeterminateTint="#ff9100"/>
                               </FrameLayout>
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
@@ -96,9 +96,9 @@ jobs:
               </LinearLayout>
 
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
-                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
+                  <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false"/>
                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
+                  <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:indeterminateTint="#ff9100"/>
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
                       <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
                           <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
@@ -213,9 +213,9 @@ jobs:
                   smallPV.setPlayer(player);
                   player.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
-                          int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
-                          if (!currentPlayerMode.equals("VLC Player (Internal)")) {
-                              ps.setVisibility(v); pf.setVisibility(v);
+                          if (currentPlayerMode.equals("ExoPlayer")) {
+                              if (s == Player.STATE_BUFFERING) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); }
+                              else { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); }
                           }
                       }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
@@ -228,23 +228,19 @@ jobs:
                   vlcMediaPlayer.setEventListener(new MediaPlayer.EventListener() {
                       @Override
                       public void onEvent(MediaPlayer.Event event) {
-                          if (event.type == MediaPlayer.Event.Buffering) {
-                              if (event.getBuffering() < 100) {
-                                  ps.setVisibility(View.VISIBLE);
-                                  pf.setVisibility(View.VISIBLE);
-                              } else {
-                                  ps.setVisibility(View.GONE);
-                                  pf.setVisibility(View.GONE);
+                          runOnUiThread(() -> {
+                              if (event.type == MediaPlayer.Event.Buffering) {
+                                  if (event.getBuffering() < 100) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); }
+                                  else { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); }
                               }
-                          }
-                          if (event.type == MediaPlayer.Event.Playing) {
-                              ps.setVisibility(View.GONE);
-                              pf.setVisibility(View.GONE);
-                              btnPP.setImageResource(android.R.drawable.ic_media_pause);
-                          }
-                          if (event.type == MediaPlayer.Event.Paused) {
-                              btnPP.setImageResource(android.R.drawable.ic_media_play);
-                          }
+                              if (event.type == MediaPlayer.Event.Playing) {
+                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
+                                  btnPP.setImageResource(android.R.drawable.ic_media_pause);
+                              }
+                              if (event.type == MediaPlayer.Event.Paused) {
+                                  btnPP.setImageResource(android.R.drawable.ic_media_play);
+                              }
+                          });
                       }
                   });
 
@@ -295,11 +291,10 @@ jobs:
                   currentCh = c;
                   tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
                   
-                  ps.setVisibility(View.VISIBLE);
-                  pf.setVisibility(View.VISIBLE);
-                  
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
+                      ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                      
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
                       vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
@@ -309,10 +304,15 @@ jobs:
                       vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
                   } else {
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
-                      smallPV.setVisibility((fullCont.getVisibility() == View.VISIBLE || doubleClick) ? View.GONE : View.VISIBLE);
-                      fullPV.setVisibility((fullCont.getVisibility() == View.VISIBLE || doubleClick) ? View.VISIBLE : View.GONE);
-                      if (fullCont.getVisibility() == View.VISIBLE || doubleClick) { smallPV.setPlayer(null); fullPV.setPlayer(player); }
+                      ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                      
+                      boolean goFull = (fullCont.getVisibility() == View.VISIBLE || doubleClick);
+                      smallPV.setVisibility(goFull ? View.GONE : View.VISIBLE);
+                      fullPV.setVisibility(goFull ? View.VISIBLE : View.GONE);
+                      
+                      if (goFull) { smallPV.setPlayer(null); fullPV.setPlayer(player); }
                       else { fullPV.setPlayer(null); smallPV.setPlayer(player); }
+                      
                       player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare(); player.play();
                   }
                   if (doubleClick || !getT(c).equals("live")) toggleFull(true);
@@ -352,11 +352,9 @@ jobs:
               private void showOverlay() {
                   overlay.setVisibility(View.VISIBLE);
                   boolean isLive = currentCh != null && getT(currentCh).equals("live");
-                  int vis = isLive ? View.GONE : View.VISIBLE;
-                  seekBar.setVisibility(vis);
-                  btnRew.setVisibility(vis);
-                  btnFfwd.setVisibility(vis);
-                  tTime.setVisibility(vis);
+                  
+                  vodControls.setVisibility(isLive ? View.GONE : View.VISIBLE);
+                  
                   handler.removeCallbacks(hideOverlay);
                   handler.postDelayed(hideOverlay, 5000);
               }
