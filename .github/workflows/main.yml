@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Fixed_Build_V2
+name: Rabie_Pro_V41_Final_Build_V3
 on: [push]
 jobs:
   build:
@@ -49,6 +49,7 @@ jobs:
 
           echo '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="true"/></network-security-config>' > app/src/main/res/xml/network_security_config.xml
 
+          # XML Layout remains the same as before
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
           <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -127,6 +128,7 @@ jobs:
           </RelativeLayout>
           EOF
 
+          # MainActivity.java with the new, robust fix
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Intent;
@@ -219,9 +221,20 @@ jobs:
                   options.add("--file-caching=3000"); options.add("--network-caching=3000");
                   libVLC = new LibVLC(this, options);
                   vlcMediaPlayer = new MediaPlayer(libVLC);
+
                   vlcMediaPlayer.setEventListener(event -> {
                       switch (event.type) {
                           case MediaPlayer.Event.Playing:
+                              runOnUiThread(() -> {
+                                  ps.setVisibility(View.GONE);
+                                  pf.setVisibility(View.GONE);
+                                  // ** THE IMPORTANT FIX **
+                                  // Ensure we fill the screen again once playback starts, if in full screen mode.
+                                  if (fullCont.getVisibility() == View.VISIBLE) {
+                                      vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
+                                  }
+                              });
+                              break;
                           case MediaPlayer.Event.EncounteredError:
                           case MediaPlayer.Event.EndReached:
                               runOnUiThread(() -> {
@@ -284,14 +297,17 @@ jobs:
                       player.stop();
                       smallPV.setVisibility(View.GONE);
                       fullPV.setVisibility(View.GONE);
+                      
+                      // Show loading spinner immediately
+                      ps.setVisibility(View.VISIBLE);
+                      if (doubleClick || !getT(c).equals("live")) pf.setVisibility(View.VISIBLE);
+
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
                       vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
+                      
                       vlcMediaPlayer.detachViews();
                       vlcMediaPlayer.attachViews(targetVlc, null, false, false);
-                      
-                      ps.setVisibility(View.VISIBLE);
-                      pf.setVisibility(View.VISIBLE);
                       
                       Media m = new Media(libVLC, Uri.parse(c.u));
                       vlcMediaPlayer.setMedia(m);
@@ -329,6 +345,7 @@ jobs:
                           vlcFull.setVisibility(View.VISIBLE);
                           vlcMediaPlayer.detachViews();
                           vlcMediaPlayer.attachViews(vlcFull, null, false, false);
+                          // Try to fill the screen immediately
                           vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
                       } else {
                           PlayerView.switchTargetView(player, smallPV, fullPV);
@@ -343,7 +360,8 @@ jobs:
                           vlcSmall.setVisibility(View.VISIBLE);
                           vlcMediaPlayer.detachViews();
                           vlcMediaPlayer.attachViews(vlcSmall, null, false, false);
-                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT);
+                          // Reset to auto aspect ratio
+                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
                       } else {
                           PlayerView.switchTargetView(player, fullPV, smallPV);
                       }
@@ -487,6 +505,7 @@ jobs:
           }
           EOF
 
+          # Other files remain the same
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
@@ -579,4 +598,4 @@ jobs:
 
       - name: Upload_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Final_Fixed_V2, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Final_Fixed_V3, path: app/build/outputs/apk/debug/*.apk }
