@@ -149,6 +149,7 @@ jobs:
           import com.google.gson.Gson;
           import com.google.gson.reflect.TypeToken;
           import java.util.*;
+          import org.json.*;
           import com.google.android.gms.cast.framework.*;
           import androidx.mediarouter.app.MediaRouteButton;
           import org.videolan.libvlc.LibVLC;
@@ -169,6 +170,7 @@ jobs:
               private Stack<String> historyStack = new Stack<>();
               private String currentCat = "", currentMode = "live";
               private Ch currentCh;
+              private ServerSource currentServer;
               private RecyclerView rvG, rvI;
               private TextView tTitle, tTime, tFullChName;
               private PlayerView smallPV, fullPV;
@@ -228,15 +230,9 @@ jobs:
                   vlcMediaPlayer = new MediaPlayer(libVLC);
 
                   vlcMediaPlayer.setEventListener(event -> {
-                      switch (event.type) {
-                          case MediaPlayer.Event.Playing:
-                              runOnUiThread(() -> {
-                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
-                                  if (fullCont.getVisibility() == View.VISIBLE) vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
-                              });
-                              break;
-                          case MediaPlayer.Event.EncounteredError: forceReload(); break;
-                      }
+                      if (event.type == MediaPlayer.Event.Playing) {
+                          runOnUiThread(() -> { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); });
+                      } else if (event.type == MediaPlayer.Event.EncounteredError) forceReload();
                   });
 
                   findViewById(R.id.btn_settings).setOnClickListener(v -> showServerManager());
@@ -280,23 +276,16 @@ jobs:
                   rvS.setLayoutManager(new LinearLayoutManager(this));
                   ServerManagerAdapter adapter = new ServerManagerAdapter();
                   rvS.setAdapter(adapter);
-
-                  AlertDialog d = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                      .setTitle("إدارة السيرفرات")
-                      .setView(v)
+                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("إدارة السيرفرات").setView(v)
                       .setPositiveButton("إضافة سيرفر", (di, w) -> showAddServerDialog(adapter))
-                      .setNeutralButton("إعدادات المشغل", (di, w) -> showPlayerSettings())
-                      .show();
+                      .setNeutralButton("إعدادات المشغل", (di, w) -> showPlayerSettings()).show();
               }
 
               private void showAddServerDialog(ServerManagerAdapter adapter) {
-                  String[] types = {"Xtream Codes", "MAC Portal", "M3U Local"};
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                      .setTitle("نوع السيرفر")
-                      .setItems(types, (di, i) -> {
-                          if (i == 0) showXtreamDialog(adapter, null);
-                          else if (i == 1) showMacDialog(adapter, null);
-                      }).show();
+                  String[] types = {"Xtream Codes", "MAC Portal"};
+                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("نوع السيرفر").setItems(types, (di, i) -> {
+                      if (i == 0) showXtreamDialog(adapter, null); else showMacDialog(adapter, null);
+                  }).show();
               }
 
               private void showXtreamDialog(ServerManagerAdapter adapter, ServerSource editS) {
@@ -321,6 +310,36 @@ jobs:
                   }).show();
               }
 
+              private void loadXtream(ServerSource s) {
+                  currentServer = s;
+                  String api = s.url + "/player_api.php?username=" + s.user + "&password=" + s.pass;
+                  ps.setVisibility(View.VISIBLE);
+                  fetchXtream(api + "&action=get_live_streams", "live");
+                  fetchXtream(api + "&action=get_vod_streams", "movie");
+                  fetchXtream(api + "&action=get_series", "series");
+              }
+
+              private void fetchXtream(String url, String type) {
+                  Volley.newRequestQueue(this).add(new JsonArrayRequest(0, url, null, res -> {
+                      try {
+                          for (int i=0; i<res.length(); i++) {
+                              JSONObject o = res.getJSONObject(i);
+                              Ch c = new Ch(); c.n = o.optString("name");
+                              c.id = o.optString("stream_id", o.optString("series_id"));
+                              c.l = o.optString("stream_icon", o.optString("cover"));
+                              c.g = o.optString("category_id", "General");
+                              c.pid = "root"; c.isF = type.equals("series") ? "1" : "0";
+                              if(type.equals("live")) c.u = currentServer.url + "/live/" + currentServer.user + "/" + currentServer.pass + "/" + c.id + ".ts";
+                              else if(type.equals("movie")) c.u = currentServer.url + "/movie/" + currentServer.user + "/" + currentServer.pass + "/" + c.id + ".mp4";
+                              database.add(c);
+                              Map<String, List<Ch>> target = type.equals("movie")?movie:(type.equals("series")?series:live);
+                              if(!target.containsKey(c.g)) target.put(c.g, new ArrayList<>()); target.get(c.g).add(c);
+                          }
+                          runOnUiThread(() -> { ps.setVisibility(View.GONE); setMode("live"); });
+                      } catch (Exception e) {}
+                  }, null));
+              }
+
               private void loadServers() { String j = serverPref.getString("list", "[]"); serverList = new Gson().fromJson(j, new TypeToken<List<ServerSource>>(){}.getType()); }
               private void saveServers() { serverPref.edit().putString("list", new Gson().toJson(serverList)).apply(); }
 
@@ -328,10 +347,7 @@ jobs:
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_server, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
                       ServerSource s = serverList.get(i); h.t.setText(s.name + " (" + s.type + ")");
-                      h.itemView.setOnClickListener(v -> { 
-                          if(s.type.equals("xtream")) loadData(s.url + "/get.php?username=" + s.user + "&password=" + s.pass + "&output=ts");
-                          Toast.makeText(MainActivity.this, "جاري تحميل: " + s.name, Toast.LENGTH_SHORT).show();
-                      });
+                      h.itemView.setOnClickListener(v -> { if(s.type.equals("xtream")) loadXtream(s); });
                       h.itemView.setOnLongClickListener(v -> {
                           new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setItems(new String[]{"تعديل", "حذف"}, (di, idx) -> {
                               if(idx == 0) { if(s.type.equals("xtream")) showXtreamDialog(this, s); else showMacDialog(this, s); }
@@ -375,7 +391,12 @@ jobs:
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE); vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
                       vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(targetVlc, null, true, false);
-                      Media m = new Media(libVLC, Uri.parse(c.u)); vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
+                      Media m = new Media(libVLC, Uri.parse(c.u));
+                      if(currentServer != null && currentServer.type.equals("mac")) {
+                          m.addOption(":http-user-agent=MAG250");
+                          m.addOption(":http-x-user-agent=Model: MAG250; SW: 2.18-r14-pub-250");
+                      }
+                      vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
                       if (savedPos > 0 && !getT(c).equals("live")) vlcMediaPlayer.setTime(savedPos);
                   } else {
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
