@@ -129,7 +129,6 @@ jobs:
 
           cat <<'EOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
-          import android.content.Context;
           import android.content.Intent;
           import android.content.SharedPreferences;
           import android.net.Uri;
@@ -149,7 +148,6 @@ jobs:
           import com.google.gson.Gson;
           import com.google.gson.reflect.TypeToken;
           import java.util.*;
-          import org.json.*;
           import com.google.android.gms.cast.framework.*;
           import androidx.mediarouter.app.MediaRouteButton;
           import org.videolan.libvlc.LibVLC;
@@ -166,11 +164,9 @@ jobs:
               private List<Ch> database = new ArrayList<>();
               private Map<String, List<Ch>> live = new LinkedHashMap<>(), movie = new LinkedHashMap<>(), series = new LinkedHashMap<>();
               private List<Ch> favList = new ArrayList<>(), currentItems = new ArrayList<>();
-              private List<ServerSource> serverList = new ArrayList<>();
               private Stack<String> historyStack = new Stack<>();
               private String currentCat = "", currentMode = "live";
               private Ch currentCh;
-              private ServerSource currentServer;
               private RecyclerView rvG, rvI;
               private TextView tTitle, tTime, tFullChName;
               private PlayerView smallPV, fullPV;
@@ -181,12 +177,11 @@ jobs:
               private ImageButton btnPP;
               private Handler handler = new Handler(Looper.getMainLooper());
               private long lastClickTime = 0;
-              private SharedPreferences settingsPref, serverPref;
+              private SharedPreferences settingsPref;
               private long lastPosition = 0;
               private int stallCount = 0;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
-              static class ServerSource { String name, type, url, user, pass, mac; }
 
               @Override
               protected void onCreate(Bundle savedInstanceState) {
@@ -194,7 +189,6 @@ jobs:
                   setContentView(R.layout.activity_main);
                   hideSystemUI();
                   settingsPref = getSharedPreferences("app_settings", MODE_PRIVATE);
-                  serverPref = getSharedPreferences("servers", MODE_PRIVATE);
                   currentPlayerMode = settingsPref.getString("player_type", "ExoPlayer");
 
                   MediaRouteButton mrb = findViewById(R.id.media_route_button);
@@ -230,12 +224,20 @@ jobs:
                   vlcMediaPlayer = new MediaPlayer(libVLC);
 
                   vlcMediaPlayer.setEventListener(event -> {
-                      if (event.type == MediaPlayer.Event.Playing) {
-                          runOnUiThread(() -> { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); });
-                      } else if (event.type == MediaPlayer.Event.EncounteredError) forceReload();
+                      switch (event.type) {
+                          case MediaPlayer.Event.Playing:
+                              runOnUiThread(() -> {
+                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
+                                  if (fullCont.getVisibility() == View.VISIBLE) {
+                                      vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
+                                  }
+                              });
+                              break;
+                          case MediaPlayer.Event.EncounteredError: forceReload(); break;
+                      }
                   });
 
-                  findViewById(R.id.btn_settings).setOnClickListener(v -> showServerManager());
+                  findViewById(R.id.btn_settings).setOnClickListener(v -> showSettings());
                   btnPP.setOnClickListener(v -> togglePlay());
                   findViewById(R.id.btn_rew).setOnClickListener(v -> seek(-10000));
                   findViewById(R.id.btn_ffwd).setOnClickListener(v -> seek(10000));
@@ -251,10 +253,7 @@ jobs:
                   rvG = findViewById(R.id.rv_groups); rvI = findViewById(R.id.rv_items);
                   tTitle = findViewById(R.id.txt_title);
                   rvG.setLayoutManager(new LinearLayoutManager(this));
-                  
-                  loadFavs(); loadServers();
-                  loadData("https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u");
-                  updateProgress(); startStallWatcher();
+                  loadFavs(); loadData(); updateProgress(); startStallWatcher();
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override public void handleOnBackPressed() {
@@ -270,100 +269,6 @@ jobs:
                   findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              private void showServerManager() {
-                  View v = getLayoutInflater().inflate(R.layout.manager_layout, null);
-                  RecyclerView rvS = v.findViewById(R.id.rv_servers);
-                  rvS.setLayoutManager(new LinearLayoutManager(this));
-                  ServerManagerAdapter adapter = new ServerManagerAdapter();
-                  rvS.setAdapter(adapter);
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("إدارة السيرفرات").setView(v)
-                      .setPositiveButton("إضافة سيرفر", (di, w) -> showAddServerDialog(adapter))
-                      .setNeutralButton("إعدادات المشغل", (di, w) -> showPlayerSettings()).show();
-              }
-
-              private void showAddServerDialog(ServerManagerAdapter adapter) {
-                  String[] types = {"Xtream Codes", "MAC Portal"};
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("نوع السيرفر").setItems(types, (di, i) -> {
-                      if (i == 0) showXtreamDialog(adapter, null); else showMacDialog(adapter, null);
-                  }).show();
-              }
-
-              private void showXtreamDialog(ServerManagerAdapter adapter, ServerSource editS) {
-                  View v = getLayoutInflater().inflate(R.layout.dialog_xtream, null);
-                  EditText eN = v.findViewById(R.id.ed_name), eH = v.findViewById(R.id.ed_host), eU = v.findViewById(R.id.ed_user), eP = v.findViewById(R.id.ed_pass);
-                  if(editS != null) { eN.setText(editS.name); eH.setText(editS.url); eU.setText(editS.user); eP.setText(editS.pass); }
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("Xtream Codes").setView(v).setPositiveButton("حفظ", (di, w) -> {
-                      ServerSource s = (editS != null) ? editS : new ServerSource();
-                      s.name = eN.getText().toString(); s.url = eH.getText().toString(); s.user = eU.getText().toString(); s.pass = eP.getText().toString(); s.type = "xtream";
-                      if(editS == null) serverList.add(s); saveServers(); adapter.notifyDataSetChanged();
-                  }).show();
-              }
-
-              private void showMacDialog(ServerManagerAdapter adapter, ServerSource editS) {
-                  View v = getLayoutInflater().inflate(R.layout.dialog_mac, null);
-                  EditText eN = v.findViewById(R.id.ed_name), eH = v.findViewById(R.id.ed_host), eM = v.findViewById(R.id.ed_mac);
-                  if(editS != null) { eN.setText(editS.name); eH.setText(editS.url); eM.setText(editS.mac); }
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("MAC Portal").setView(v).setPositiveButton("حفظ", (di, w) -> {
-                      ServerSource s = (editS != null) ? editS : new ServerSource();
-                      s.name = eN.getText().toString(); s.url = eH.getText().toString(); s.mac = eM.getText().toString(); s.type = "mac";
-                      if(editS == null) serverList.add(s); saveServers(); adapter.notifyDataSetChanged();
-                  }).show();
-              }
-
-              private void loadXtream(ServerSource s) {
-                  currentServer = s;
-                  String api = s.url + "/player_api.php?username=" + s.user + "&password=" + s.pass;
-                  ps.setVisibility(View.VISIBLE);
-                  fetchXtream(api + "&action=get_live_streams", "live");
-                  fetchXtream(api + "&action=get_vod_streams", "movie");
-                  fetchXtream(api + "&action=get_series", "series");
-              }
-
-              private void fetchXtream(String url, String type) {
-                  Volley.newRequestQueue(this).add(new JsonArrayRequest(0, url, null, res -> {
-                      try {
-                          for (int i=0; i<res.length(); i++) {
-                              JSONObject o = res.getJSONObject(i);
-                              Ch c = new Ch(); c.n = o.optString("name");
-                              c.id = o.optString("stream_id", o.optString("series_id"));
-                              c.l = o.optString("stream_icon", o.optString("cover"));
-                              c.g = o.optString("category_id", "General");
-                              c.pid = "root"; c.isF = type.equals("series") ? "1" : "0";
-                              if(type.equals("live")) c.u = currentServer.url + "/live/" + currentServer.user + "/" + currentServer.pass + "/" + c.id + ".ts";
-                              else if(type.equals("movie")) c.u = currentServer.url + "/movie/" + currentServer.user + "/" + currentServer.pass + "/" + c.id + ".mp4";
-                              database.add(c);
-                              Map<String, List<Ch>> target = type.equals("movie")?movie:(type.equals("series")?series:live);
-                              if(!target.containsKey(c.g)) target.put(c.g, new ArrayList<>()); target.get(c.g).add(c);
-                          }
-                          runOnUiThread(() -> { ps.setVisibility(View.GONE); setMode("live"); });
-                      } catch (Exception e) {}
-                  }, null));
-              }
-
-              private void loadServers() { String j = serverPref.getString("list", "[]"); serverList = new Gson().fromJson(j, new TypeToken<List<ServerSource>>(){}.getType()); }
-              private void saveServers() { serverPref.edit().putString("list", new Gson().toJson(serverList)).apply(); }
-
-              class ServerManagerAdapter extends RecyclerView.Adapter<ServerManagerAdapter.VH> {
-                  public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_server, p, false)); }
-                  public void onBindViewHolder(VH h, int i) {
-                      ServerSource s = serverList.get(i); h.t.setText(s.name + " (" + s.type + ")");
-                      h.itemView.setOnClickListener(v -> { if(s.type.equals("xtream")) loadXtream(s); });
-                      h.itemView.setOnLongClickListener(v -> {
-                          new AlertDialog.Builder(MainActivity.this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setItems(new String[]{"تعديل", "حذف"}, (di, idx) -> {
-                              if(idx == 0) { if(s.type.equals("xtream")) showXtreamDialog(this, s); else showMacDialog(this, s); }
-                              else { serverList.remove(i); saveServers(); notifyDataSetChanged(); }
-                          }).show(); return true;
-                      });
-                  }
-                  public int getItemCount() { return serverList.size(); }
-                  class VH extends RecyclerView.ViewHolder { TextView t; VH(View v) { super(v); t = v.findViewById(R.id.txt_server_name); v.setFocusable(true); } }
-              }
-
-              private void showPlayerSettings() {
-                  String[] modes = {"ExoPlayer", "VLC Player (Internal)"};
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("اختر المشغل").setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> { currentPlayerMode = modes[i]; settingsPref.edit().putString("player_type", currentPlayerMode).apply(); d.dismiss(); }).show();
-              }
-
               private void startStallWatcher() {
                   handler.postDelayed(new Runnable() {
                       @Override public void run() {
@@ -371,7 +276,10 @@ jobs:
                               long currentPos = player.getCurrentPosition();
                               if (currentPos == lastPosition) { 
                                   stallCount++;
-                                  if (stallCount >= 3) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); if (stallCount >= 10) { forceReload(); stallCount = 0; } }
+                                  if (stallCount >= 3) {
+                                      ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
+                                      if (stallCount >= 10) { forceReload(); stallCount = 0; }
+                                  }
                               } else { stallCount = 0; ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); }
                               lastPosition = currentPos;
                           }
@@ -380,28 +288,33 @@ jobs:
                   }, 500);
               }
 
-              private void forceReload() { if (currentCh == null) return; if (currentPlayerMode.equals("ExoPlayer")) { player.prepare(); player.play(); } else { vlcMediaPlayer.stop(); vlcMediaPlayer.play(); } }
+              private void forceReload() {
+                  if (currentCh == null) return;
+                  if (currentPlayerMode.equals("ExoPlayer")) { player.prepare(); player.play(); }
+                  else { vlcMediaPlayer.stop(); vlcMediaPlayer.play(); }
+              }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
                   long savedPos = settingsPref.getLong("pos_" + c.u, 0);
-                  currentCh = c; tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
+                  currentCh = c;
+                  tTitle.setText(c.n); tFullChName.setText(c.n); Glide.with(this).load(c.l).into(fullChLogo); updateFavIcon();
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
-                      ps.setVisibility(View.VISIBLE); if (doubleClick || !getT(c).equals("live")) pf.setVisibility(View.VISIBLE);
+                      ps.setVisibility(View.VISIBLE);
+                      if (doubleClick || !getT(c).equals("live")) pf.setVisibility(View.VISIBLE);
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
-                      vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE); vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
-                      vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(targetVlc, null, true, false);
+                      vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
+                      vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
+                      vlcMediaPlayer.detachViews();
+                      vlcMediaPlayer.attachViews(targetVlc, null, true, false);
                       Media m = new Media(libVLC, Uri.parse(c.u));
-                      if(currentServer != null && currentServer.type.equals("mac")) {
-                          m.addOption(":http-user-agent=MAG250");
-                          m.addOption(":http-x-user-agent=Model: MAG250; SW: 2.18-r14-pub-250");
-                      }
                       vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
                       if (savedPos > 0 && !getT(c).equals("live")) vlcMediaPlayer.setTime(savedPos);
                   } else {
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
                       PlayerView targetView = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? fullPV : smallPV;
-                      if (targetView == smallPV) { fullPV.setPlayer(null); smallPV.setPlayer(player); } else { smallPV.setPlayer(null); fullPV.setPlayer(player); }
+                      if (targetView == smallPV) { fullPV.setPlayer(null); smallPV.setPlayer(player); }
+                      else { smallPV.setPlayer(null); fullPV.setPlayer(player); }
                       targetView.setVisibility(View.VISIBLE);
                       player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare();
                       if (savedPos > 0 && !getT(c).equals("live")) player.seekTo(savedPos);
@@ -450,6 +363,11 @@ jobs:
               }
               @Override protected void onResume() { super.onResume(); hideSystemUI(); }
 
+              private void showSettings() {
+                  String[] modes = {"ExoPlayer", "VLC Player (Internal)"};
+                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("اختر المشغل").setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> { currentPlayerMode = modes[i]; settingsPref.edit().putString("player_type", currentPlayerMode).apply(); d.dismiss(); }).show();
+              }
+
               private String getT(Ch c) {
                   String g = c.g.toLowerCase();
                   if ("1".equals(c.isF)) return "series";
@@ -489,7 +407,7 @@ jobs:
               }
 
               private String formatTime(long ms) { long s=(ms/1000)%60, m=(ms/60000)%60, h=(ms/3600000); return h>0?String.format("%02d:%02d:%02d",h,m,s):String.format("%02d:%02d",m,s); }
-              private void loadData(String url) { Volley.newRequestQueue(this).add(new StringRequest(0, url, res -> { parse(res); setMode("live"); }, null)); }
+              private void loadData() { String url = "https://gist.githubusercontent.com/rabiebobo3/d498347610d7312b3e9be88093117620/raw/list.m3u"; Volley.newRequestQueue(this).add(new StringRequest(0, url, res -> { parse(res); setMode("live"); }, null)); }
               private void loadFavs() { String j = getSharedPreferences("p", MODE_PRIVATE).getString("f", "[]"); favList = new Gson().fromJson(j, new TypeToken<List<Ch>>(){}.getType()); if(favList == null) favList = new ArrayList<>(); }
               private void toggleFav() { if (currentCh == null) return; int idx = -1; for (int i=0; i<favList.size(); i++) if(favList.get(i).u.equals(currentCh.u)) idx = i; if (idx != -1) favList.remove(idx); else favList.add(currentCh); getSharedPreferences("p", MODE_PRIVATE).edit().putString("f", new Gson().toJson(favList)).apply(); updateFavIcon(); }
               private void updateFavIcon() { boolean isFav = false; if (currentCh != null) for (Ch f : favList) if(f.u.equals(currentCh.u)) isFav = true; fullFavBtn.setImageResource(isFav ? android.R.drawable.btn_star_big_on : android.R.drawable.btn_star_big_off); }
@@ -574,35 +492,6 @@ jobs:
               private Runnable hideOverlay = () -> overlay.setVisibility(View.GONE);
               @Override protected void onDestroy() { super.onDestroy(); player.release(); vlcMediaPlayer.release(); libVLC.release(); }
           }
-          EOF
-
-          cat <<EOF > app/src/main/res/layout/manager_layout.xml
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="300dp" android:orientation="vertical" android:padding="10dp" android:background="#0A0817">
-              <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_servers" android:layout_width="match_parent" android:layout_height="match_parent"/>
-          </LinearLayout>
-          EOF
-
-          cat <<EOF > app/src/main/res/layout/item_server.xml
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="15dp" android:layout_margin="5dp" android:background="@drawable/tab_button_style" android:focusable="true" android:clickable="true">
-              <TextView android:id="@+id/txt_server_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFF" android:textSize="16sp" android:textStyle="bold"/>
-          </LinearLayout>
-          EOF
-
-          cat <<EOF > app/src/main/res/layout/dialog_xtream.xml
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-              <EditText android:id="@+id/ed_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اسم السيرفر" android:textColorHint="#999" android:textColor="#000"/>
-              <EditText android:id="@+id/ed_host" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Host (http://...)" android:textColor="#000"/>
-              <EditText android:id="@+id/ed_user" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Username" android:textColor="#000"/>
-              <EditText android:id="@+id/ed_pass" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Password" android:inputType="textPassword" android:textColor="#000"/>
-          </LinearLayout>
-          EOF
-
-          cat <<EOF > app/src/main/res/layout/dialog_mac.xml
-          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-              <EditText android:id="@+id/ed_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="اسم السيرفر" android:textColor="#000"/>
-              <EditText android:id="@+id/ed_host" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Portal URL" android:textColor="#000"/>
-              <EditText android:id="@+id/ed_mac" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="MAC Address" android:textColor="#000"/>
-          </LinearLayout>
           EOF
 
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
