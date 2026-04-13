@@ -1,4 +1,4 @@
-name: Rabie_Pro_V41_Final_Build_V3
+name: Rabie_Pro_V41_Ultimate_Edition
 on: [push]
 jobs:
   build:
@@ -8,7 +8,7 @@ jobs:
       - uses: actions/setup-java@v4
         with: { java-version: '17', distribution: 'temurin' }
 
-      - name: Build_V41_Ultimate_Fixed
+      - name: Build_V41_Professional_Final
         run: |
           rm -rf app settings.gradle build.gradle gradle.properties .gradle
           echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" > gradle.properties
@@ -33,28 +33,15 @@ jobs:
           curl -Lo app/src/main/res/mipmap-xxxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          # ✅ إضافة شعار دائري للعناصر بدون لوجو
           cat <<'CIRCLOGO' > app/src/main/res/drawable/app_logo_circle.xml
           <?xml version="1.0" encoding="utf-8"?>
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-              <item>
-                  <shape android:shape="oval">
-                      <solid android:color="#1a1a2e"/>
-                      <stroke android:width="2dp" android:color="#ff9100"/>
-                  </shape>
-              </item>
-              <item android:drawable="@drawable/app_logo" android:gravity="center" android:width="32dp" android:height="32dp"/>
-          </layer-list>
+              <item><shape android:shape="oval"><solid android:color="#1a1a2e"/><stroke android:width="2dp" android:color="#ff9100"/></shape></item>
+              <item android:drawable="@drawable/app_logo" android:gravity="center" android:width="32dp" android:height="32dp"/></layer-list>
           CIRCLOGO
 
           cat <<EOF > app/src/main/res/values/colors.xml
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-              <color name="colorPrimary">#05030A</color>
-              <color name="colorPrimaryDark">#000000</color>
-              <color name="colorAccent">#FF9100</color>
-              <color name="white">#FFFFFF</color>
-          </resources>
+          <?xml version="1.0" encoding="utf-8"?><resources><color name="colorPrimary">#05030A</color><color name="colorPrimaryDark">#000000</color><color name="colorAccent">#FF9100</color><color name="white">#FFFFFF</color></resources>
           EOF
 
           cat <<EOF > app/src/main/res/values/strings.xml
@@ -65,22 +52,15 @@ jobs:
 
           cat <<EOF > app/src/main/res/layout/activity_main.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:layout_width="match_parent" android:layout_height="match_parent" 
-              android:background="#05030A" android:keepScreenOn="true">
-              
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:keepScreenOn="true">
               <LinearLayout android:id="@+id/splash_screen" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#05030A" android:gravity="center" android:elevation="20dp">
                   <androidx.cardview.widget.CardView android:layout_width="150dp" android:layout_height="150dp" app:cardCornerRadius="75dp" app:cardBackgroundColor="#000" app:cardElevation="0dp">
                       <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
                   </androidx.cardview.widget.CardView>
               </LinearLayout>
-
               <LinearLayout android:id="@+id/main_ui_container" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:visibility="gone">
                   <LinearLayout android:id="@+id/top_tabs" android:layout_width="match_parent" android:layout_height="65dp" android:background="#000" android:gravity="center_vertical" android:padding="10dp">
-                      <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp">
-                          <ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/>
-                      </androidx.cardview.widget.CardView>
+                      <androidx.cardview.widget.CardView android:layout_width="45dp" android:layout_height="45dp" app:cardCornerRadius="22.5dp" app:cardBackgroundColor="#000" android:layout_marginRight="10dp"><ImageView android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/app_logo" android:scaleType="centerCrop"/></androidx.cardview.widget.CardView>
                       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="RABIE PRO" android:textColor="#ff9100" android:textStyle="bold" android:textSize="22sp" android:layout_marginRight="20dp"/>
                       <View android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"/>
                       <Button android:id="@+id/tab_live" android:layout_width="wrap_content" android:layout_height="42dp" android:text="القنوات" android:textColor="#EEE" android:textSize="13sp" android:layout_marginLeft="8dp" android:focusable="true" android:background="@drawable/tab_button_style"/>
@@ -89,14 +69,12 @@ jobs:
                       <Button android:id="@+id/tab_fav" android:layout_width="55dp" android:layout_height="42dp" android:text="⭐" android:textColor="#ff9100" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style"/>
                       <Button android:id="@+id/btn_settings" android:layout_width="55dp" android:layout_height="42dp" android:text="⚙️" android:textColor="#FFF" android:textSize="16sp" android:focusable="true" android:background="@drawable/tab_button_style" android:layout_marginLeft="8dp"/>
                   </LinearLayout>
-
                   <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:baselineAligned="false">
                       <LinearLayout android:id="@+id/left_side_container" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.55" android:orientation="vertical" android:padding="10dp">
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
                               <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false"/>
                               <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
                               <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100"/>
-                              <!-- ✅ طبقة منع الشاشة السوداء -->
                               <View android:id="@+id/player_placeholder_small" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#0a0a1a" android:visibility="gone"/>
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
@@ -108,20 +86,14 @@ jobs:
                       <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_groups" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.20" android:background="#120E26" android:focusable="true"/>
                   </LinearLayout>
               </LinearLayout>
-
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true">
                   <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                  <!-- ✅ طبقة منع الشاشة السوداء للمشغل الكامل -->
                   <View android:id="@+id/player_placeholder_full" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#0a0a1a" android:visibility="gone"/>
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone">
                       <LinearLayout android:id="@+id/infobar_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="#E6000000" android:orientation="horizontal" android:padding="15dp" android:gravity="center_vertical">
-                          <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp">
-                              <ImageView android:id="@+id/full_ch_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-                          </androidx.cardview.widget.CardView>
-                          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
-                              <TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/>
-                          </LinearLayout>
+                          <androidx.cardview.widget.CardView android:layout_width="60dp" android:layout_height="60dp" app:cardCornerRadius="30dp" app:cardBackgroundColor="#000" android:layout_marginRight="15dp"><ImageView android:id="@+id/full_ch_logo" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/></androidx.cardview.widget.CardView>
+                          <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical"><TextView android:id="@+id/full_ch_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#ff9100" android:textSize="22sp" android:textStyle="bold"/></LinearLayout>
                           <ImageButton android:id="@+id/btn_dlna" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/ic_menu_share" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
                           <ImageButton android:id="@+id/full_fav_btn" android:layout_width="50dp" android:layout_height="50dp" android:src="@android:drawable/btn_star_big_off" android:background="@drawable/round_btn" android:layout_marginRight="10dp" android:focusable="true"/>
                           <androidx.mediarouter.app.MediaRouteButton android:id="@+id/media_route_button" android:layout_width="50dp" android:layout_height="50dp" android:focusable="true" android:background="@drawable/round_btn"/>
@@ -145,7 +117,6 @@ jobs:
           </RelativeLayout>
           EOF
 
-          # ✅ الكود الرئيسي مع جميع التحسينات المطلوبة
           cat <<'JAVAEOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Intent;
@@ -202,7 +173,6 @@ jobs:
               private SharedPreferences settingsPref;
               private long lastPosition = 0;
               private int stallCount = 0;
-              private int lastFocusedPos = -1;
               private Vibrator vibrator;
 
               static class Ch { String n, u, g, l, id, pid, isF; }
@@ -215,10 +185,7 @@ jobs:
                   settingsPref = getSharedPreferences("app_settings", MODE_PRIVATE);
                   currentPlayerMode = settingsPref.getString("player_type", "ExoPlayer");
                   
-                  // ✅ تهيئة الاهتزاز لأندرويد تفي
-                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                      vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                  }
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) { vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE); }
 
                   MediaRouteButton mrb = findViewById(R.id.media_route_button);
                   CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb);
@@ -226,8 +193,7 @@ jobs:
                   splash = findViewById(R.id.splash_screen); mainUI = findViewById(R.id.main_ui_container);
                   leftSide = findViewById(R.id.left_side_container); placeholderSmall = findViewById(R.id.player_placeholder_small); placeholderFull = findViewById(R.id.player_placeholder_full);
                   fullChLogo = findViewById(R.id.full_ch_logo); tFullChName = findViewById(R.id.full_ch_name);
-                  fullFavBtn = findViewById(R.id.full_fav_btn);
-                  smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
+                  fullFavBtn = findViewById(R.id.full_fav_btn); smallPV = findViewById(R.id.small_player); fullPV = findViewById(R.id.full_player);
                   vlcSmall = findViewById(R.id.vlc_layout_small); vlcFull = findViewById(R.id.vlc_layout_full);
                   fullCont = findViewById(R.id.full_container); overlay = findViewById(R.id.overlay_full);
                   tTime = findViewById(R.id.txt_time); seekBar = findViewById(R.id.full_seekbar);
@@ -236,42 +202,30 @@ jobs:
 
                   handler.postDelayed(() -> { splash.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE); }, 2000);
 
-                  // ✅ تحسينات المشغل: تهيئة أسرع ومنع الشاشة السوداء
-                  player = new ExoPlayer.Builder(this).setLoadControl(new DefaultLoadControl.Builder().setBufferDurationsMs(20000, 50000, 1000, 2000).build()).build();
+                  // ✅ تحسين 1: التخزين المؤقت الذكي (Adaptive Buffering)
+                  DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                      .setBufferDurationsMs(15000, 50000, 2500, 5000).build();
+                  player = new ExoPlayer.Builder(this).setLoadControl(loadControl).build();
+                  
                   smallPV.setPlayer(player);
-                  smallPV.setKeepScreenOn(true); fullPV.setKeepScreenOn(true);
                   player.addListener(new Player.Listener() {
                       public void onPlaybackStateChanged(int s) {
                           int v = (s == Player.STATE_BUFFERING) ? View.VISIBLE : View.GONE;
                           ps.setVisibility(v); pf.setVisibility(v);
-                          // ✅ إخفاء طبقة المنع عند بدء التشغيل الفعلي
-                          if (s == Player.STATE_READY) {
-                              placeholderSmall.setVisibility(View.GONE);
-                              placeholderFull.setVisibility(View.GONE);
-                          }
+                          if (s == Player.STATE_READY) { placeholderSmall.setVisibility(View.GONE); placeholderFull.setVisibility(View.GONE); }
                       }
                       public void onIsPlayingChanged(boolean p) { btnPP.setImageResource(p ? android.R.drawable.ic_media_pause : android.R.drawable.ic_media_play); }
                       public void onPlayerError(PlaybackException e) { forceReload(); }
                   });
 
                   ArrayList<String> options = new ArrayList<>();
-                  options.add("--file-caching=2000"); options.add("--network-caching=2000");
+                  options.add("--file-caching=3000"); options.add("--network-caching=3000");
                   libVLC = new LibVLC(this, options);
                   vlcMediaPlayer = new MediaPlayer(libVLC);
-
                   vlcMediaPlayer.setEventListener(event -> {
-                      switch (event.type) {
-                          case MediaPlayer.Event.Playing:
-                              runOnUiThread(() -> {
-                                  ps.setVisibility(View.GONE); pf.setVisibility(View.GONE);
-                                  placeholderSmall.setVisibility(View.GONE); placeholderFull.setVisibility(View.GONE);
-                                  if (fullCont.getVisibility() == View.VISIBLE) {
-                                      vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
-                                  }
-                              });
-                              break;
-                          case MediaPlayer.Event.EncounteredError: forceReload(); break;
-                      }
+                      if (event.type == MediaPlayer.Event.Playing) {
+                          runOnUiThread(() -> { ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); placeholderSmall.setVisibility(View.GONE); placeholderFull.setVisibility(View.GONE); });
+                      } else if (event.type == MediaPlayer.Event.EncounteredError) { forceReload(); }
                   });
 
                   findViewById(R.id.btn_settings).setOnClickListener(v -> showSettings());
@@ -280,16 +234,12 @@ jobs:
                   findViewById(R.id.btn_ffwd).setOnClickListener(v -> seek(10000));
                   findViewById(R.id.btn_next_item).setOnClickListener(v -> playNext());
                   findViewById(R.id.btn_prev_item).setOnClickListener(v -> playPrev());
-                  findViewById(R.id.btn_dlna).setOnClickListener(v -> {
-                      if (currentCh != null) startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(currentCh.u), "video/*"), "بث عبر..."));
-                  });
-
+                  findViewById(R.id.btn_dlna).setOnClickListener(v -> { if (currentCh != null) startActivity(Intent.createChooser(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.parse(currentCh.u), "video/*"), "بث عبر...")); });
                   fullCont.setOnClickListener(v -> showOverlay());
                   fullFavBtn.setOnClickListener(v -> toggleFav());
                   findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFav());
                   rvG = findViewById(R.id.rv_groups); rvI = findViewById(R.id.rv_items);
-                  tTitle = findViewById(R.id.txt_title);
-                  rvG.setLayoutManager(new LinearLayoutManager(this));
+                  tTitle = findViewById(R.id.txt_title); rvG.setLayoutManager(new LinearLayoutManager(this));
                   loadFavs(); loadData(); updateProgress(); startStallWatcher();
 
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -313,10 +263,7 @@ jobs:
                               long currentPos = player.getCurrentPosition();
                               if (currentPos == lastPosition) { 
                                   stallCount++;
-                                  if (stallCount >= 3) {
-                                      ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE);
-                                      if (stallCount >= 10) { forceReload(); stallCount = 0; }
-                                  }
+                                  if (stallCount >= 3) { ps.setVisibility(View.VISIBLE); pf.setVisibility(View.VISIBLE); if (stallCount >= 10) { forceReload(); stallCount = 0; } }
                               } else { stallCount = 0; ps.setVisibility(View.GONE); pf.setVisibility(View.GONE); }
                               lastPosition = currentPos;
                           }
@@ -325,45 +272,30 @@ jobs:
                   }, 500);
               }
 
-              private void forceReload() {
-                  if (currentCh == null) return;
-                  // ✅ منع الشاشة السوداء أثناء إعادة التحميل
-                  placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
-                  if (currentPlayerMode.equals("ExoPlayer")) { player.prepare(); player.play(); }
-                  else { vlcMediaPlayer.stop(); vlcMediaPlayer.play(); }
-              }
+              private void forceReload() { if (currentCh == null) return; placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE); if (currentPlayerMode.equals("ExoPlayer")) { player.prepare(); player.play(); } else { vlcMediaPlayer.stop(); vlcMediaPlayer.play(); } }
 
               private void playChannel(Ch c, int pos, boolean doubleClick) {
                   long savedPos = settingsPref.getLong("pos_" + c.u, 0);
-                  currentCh = c;
-                  tTitle.setText(c.n); tFullChName.setText(c.n); 
-                  // ✅ شعار دائري للعناصر بدون لوجو
+                  currentCh = c; tTitle.setText(c.n); tFullChName.setText(c.n);
                   RequestOptions circularRequest = new RequestOptions().transform(new CircleCrop()).placeholder(R.drawable.app_logo_circle).error(R.drawable.app_logo_circle).diskCacheStrategy(DiskCacheStrategy.ALL);
                   Glide.with(this).load(c.l).apply(circularRequest).into(fullChLogo);
-                  updateFavIcon();
-                  
-                  // ✅ إظهار طبقة المنع أثناء التحميل
-                  placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
+                  updateFavIcon(); placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
                   
                   if (currentPlayerMode.equals("VLC Player (Internal)")) {
                       player.stop(); smallPV.setVisibility(View.GONE); fullPV.setVisibility(View.GONE);
-                      ps.setVisibility(View.VISIBLE);
-                      if (doubleClick || !getT(c).equals("live")) pf.setVisibility(View.VISIBLE);
                       VLCVideoLayout targetVlc = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? vlcFull : vlcSmall;
                       vlcSmall.setVisibility(targetVlc == vlcSmall ? View.VISIBLE : View.GONE);
                       vlcFull.setVisibility(targetVlc == vlcFull ? View.VISIBLE : View.GONE);
-                      vlcMediaPlayer.detachViews();
-                      vlcMediaPlayer.attachViews(targetVlc, null, true, false);
-                      Media m = new Media(libVLC, Uri.parse(c.u));
-                      vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
+                      vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(targetVlc, null, true, false);
+                      Media m = new Media(libVLC, Uri.parse(c.u)); vlcMediaPlayer.setMedia(m); m.release(); vlcMediaPlayer.play();
+                      // ✅ تحسين 2: استكمال المشاهدة لـ VLC
                       if (savedPos > 0 && !getT(c).equals("live")) vlcMediaPlayer.setTime(savedPos);
                   } else {
                       vlcMediaPlayer.stop(); vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.GONE);
                       PlayerView targetView = (fullCont.getVisibility() == View.VISIBLE || doubleClick) ? fullPV : smallPV;
-                      if (targetView == smallPV) { fullPV.setPlayer(null); smallPV.setPlayer(player); }
-                      else { smallPV.setPlayer(null); fullPV.setPlayer(player); }
-                      targetView.setVisibility(View.VISIBLE);
-                      player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare();
+                      if (targetView == smallPV) { fullPV.setPlayer(null); smallPV.setPlayer(player); } else { smallPV.setPlayer(null); fullPV.setPlayer(player); }
+                      targetView.setVisibility(View.VISIBLE); player.setMediaItem(MediaItem.fromUri(c.u)); player.prepare();
+                      // ✅ تحسين 2: استكمال المشاهدة لـ ExoPlayer
                       if (savedPos > 0 && !getT(c).equals("live")) player.seekTo(savedPos);
                       player.play();
                   }
@@ -371,42 +303,20 @@ jobs:
               }
 
               private void toggleFull(boolean full) {
-                  // ✅ انتقال سلس مع منع الشاشة السوداء
-                  pf.setVisibility(View.VISIBLE);
-                  placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
-                  
+                  pf.setVisibility(View.VISIBLE); placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
                   if (full) {
                       mainUI.setVisibility(View.GONE); fullCont.setVisibility(View.VISIBLE);
                       if (currentPlayerMode.equals("VLC Player (Internal)")) {
                           vlcSmall.setVisibility(View.GONE); vlcFull.setVisibility(View.VISIBLE);
                           vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcFull, null, true, false);
-                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
-                          handler.postDelayed(() -> {
-                              vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
-                              placeholderFull.setVisibility(View.GONE);
-                          }, 100);
-                      } else {
-                          // ✅ تأثير انتقال ناعم للمشغل
-                          fullPV.setAlpha(0f); fullPV.setVisibility(View.VISIBLE);
-                          fullPV.animate().alpha(1f).setDuration(120).start();
-                          smallPV.animate().alpha(0f).setDuration(120).withEndAction(() -> {
-                              smallPV.setVisibility(View.GONE); smallPV.setAlpha(1f);
-                              PlayerView.switchTargetView(player, smallPV, fullPV);
-                              placeholderFull.setVisibility(View.GONE);
-                          }).start();
-                      }
+                      } else { PlayerView.switchTargetView(player, smallPV, fullPV); }
                       showOverlay(); fullCont.requestFocus();
                   } else {
                       fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
                       if (currentPlayerMode.equals("VLC Player (Internal)")) {
                           vlcFull.setVisibility(View.GONE); vlcSmall.setVisibility(View.VISIBLE);
                           vlcMediaPlayer.detachViews(); vlcMediaPlayer.attachViews(vlcSmall, null, true, false);
-                          vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
-                          placeholderSmall.setVisibility(View.GONE);
-                      } else {
-                          PlayerView.switchTargetView(player, fullPV, smallPV);
-                          placeholderSmall.setVisibility(View.GONE);
-                      }
+                      } else { PlayerView.switchTargetView(player, fullPV, smallPV); }
                   }
                   handler.postDelayed(() -> { pf.setVisibility(View.GONE); placeholderSmall.setVisibility(View.GONE); placeholderFull.setVisibility(View.GONE); }, 150);
               }
@@ -421,6 +331,7 @@ jobs:
                   return super.onKeyDown(keyCode, event);
               }
 
+              // ✅ تحسين 3: حفظ دقيق لموضع الفيديو عند الخروج
               @Override protected void onPause() {
                   super.onPause();
                   if (currentCh != null && !getT(currentCh).equals("live")) {
@@ -429,45 +340,29 @@ jobs:
                   }
                   player.pause(); vlcMediaPlayer.pause();
               }
+
               @Override protected void onResume() { super.onResume(); hideSystemUI(); }
 
-              private void showSettings() {
-                  String[] modes = {"ExoPlayer", "VLC Player (Internal)"};
-                  new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("اختر المشغل").setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> { currentPlayerMode = modes[i]; settingsPref.edit().putString("player_type", currentPlayerMode).apply(); d.dismiss(); }).show();
+              // ✅ تحسين 4: حماية الذاكرة (Memory Leak Prevention)
+              @Override protected void onDestroy() {
+                  handler.removeCallbacksAndMessages(null);
+                  if (player != null) player.release();
+                  if (vlcMediaPlayer != null) { vlcMediaPlayer.stop(); vlcMediaPlayer.detachViews(); vlcMediaPlayer.release(); }
+                  if (libVLC != null) libVLC.release();
+                  super.onDestroy();
               }
 
-              private String getT(Ch c) {
-                  String g = c.g.toLowerCase();
-                  if ("1".equals(c.isF)) return "series";
-                  if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie";
-                  if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series";
-                  return "live";
-              }
-
-              private void showOverlay() {
-                  overlay.setVisibility(View.VISIBLE);
-                  boolean isLive = currentCh != null && getT(currentCh).equals("live");
-                  vodControls.setVisibility(isLive ? View.GONE : View.VISIBLE);
-                  handler.removeCallbacks(hideOverlay); handler.postDelayed(hideOverlay, 5000);
-              }
-
-              private void togglePlay() {
-                  if (currentPlayerMode.equals("VLC Player (Internal)")) { if (vlcMediaPlayer.isPlaying()) vlcMediaPlayer.pause(); else vlcMediaPlayer.play(); }
-                  else { if (player.isPlaying()) player.pause(); else player.play(); }
-              }
-
-              private void seek(long ms) {
-                  if (currentCh != null && getT(currentCh).equals("live")) return;
-                  if (currentPlayerMode.equals("VLC Player (Internal)")) vlcMediaPlayer.setTime(vlcMediaPlayer.getTime() + ms);
-                  else player.seekTo(player.getCurrentPosition() + ms);
-              }
+              private void showSettings() { String[] modes = {"ExoPlayer", "VLC Player (Internal)"}; new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert).setTitle("اختر المشغل").setSingleChoiceItems(modes, currentPlayerMode.equals("ExoPlayer") ? 0 : 1, (d, i) -> { currentPlayerMode = modes[i]; settingsPref.edit().putString("player_type", currentPlayerMode).apply(); d.dismiss(); }).show(); }
+              private String getT(Ch c) { String g = c.g.toLowerCase(); if ("1".equals(c.isF)) return "series"; if (g.contains("movie") || g.contains("أفلام") || g.contains("افلام")) return "movie"; if (g.contains("series") || g.contains("مسلسل") || g.contains("حلقات")) return "series"; return "live"; }
+              private void showOverlay() { overlay.setVisibility(View.VISIBLE); boolean isLive = currentCh != null && getT(currentCh).equals("live"); vodControls.setVisibility(isLive ? View.GONE : View.VISIBLE); handler.removeCallbacks(hideOverlay); handler.postDelayed(hideOverlay, 5000); }
+              private void togglePlay() { if (currentPlayerMode.equals("VLC Player (Internal)")) { if (vlcMediaPlayer.isPlaying()) vlcMediaPlayer.pause(); else vlcMediaPlayer.play(); } else { if (player.isPlaying()) player.pause(); else player.play(); } }
+              private void seek(long ms) { if (currentCh != null && getT(currentCh).equals("live")) return; if (currentPlayerMode.equals("VLC Player (Internal)")) vlcMediaPlayer.setTime(vlcMediaPlayer.getTime() + ms); else player.seekTo(player.getCurrentPosition() + ms); }
 
               private void updateProgress() {
                   handler.post(() -> {
                       if (currentCh != null && !getT(currentCh).equals("live")) {
                           long dur = 0, pos = 0;
-                          if (currentPlayerMode.equals("VLC Player (Internal)")) { dur = vlcMediaPlayer.getLength(); pos = vlcMediaPlayer.getTime(); }
-                          else { dur = player.getDuration(); pos = player.getCurrentPosition(); }
+                          if (currentPlayerMode.equals("VLC Player (Internal)")) { dur = vlcMediaPlayer.getLength(); pos = vlcMediaPlayer.getTime(); } else { dur = player.getDuration(); pos = player.getCurrentPosition(); }
                           if (dur > 0) { seekBar.setMax((int) dur); seekBar.setProgress((int) pos); tTime.setText(formatTime(pos) + " / " + formatTime(dur)); }
                       }
                   });
@@ -489,33 +384,18 @@ jobs:
                   else { leftSide.setVisibility(View.GONE); params.weight = 0.80f; ((LinearLayout.LayoutParams) leftSide.getLayoutParams()).weight = 0f; rvI.setLayoutManager(new GridLayoutManager(this, 5)); }
                   rvI.setLayoutParams(params);
                   if(m.equals("fav")) { currentItems = new ArrayList<>(favList); rvG.setVisibility(View.GONE); rvI.setAdapter(new ItemAdapter(currentItems)); return; }
-                  rvG.setVisibility(View.VISIBLE);
-                  Map<String, List<Ch>> d = m.equals("movie") ? movie : (m.equals("series") ? series : live);
-                  List<String> groups = new ArrayList<>(d.keySet());
-                  rvG.setAdapter(new GroupAdapter(groups));
+                  rvG.setVisibility(View.VISIBLE); Map<String, List<Ch>> d = m.equals("movie") ? movie : (m.equals("series") ? series : live);
+                  List<String> groups = new ArrayList<>(d.keySet()); rvG.setAdapter(new GroupAdapter(groups));
                   if (!groups.isEmpty()) { currentCat = groups.get(0); renderGallery("root"); }
               }
 
               private void renderGallery(String pid) {
-                  currentPid = pid;
-                  List<Ch> filtered = new ArrayList<>();
+                  currentPid = pid; List<Ch> filtered = new ArrayList<>();
                   for (Ch i : database) if (getT(i).equals(currentMode) && i.g.equals(currentCat) && i.pid.equals(pid)) filtered.add(i);
                   currentItems = filtered; rvI.setAdapter(new ItemAdapter(currentItems));
-                  
-                  // ✅ استعادة موضع التركيز آخر مرة
                   String focusKey = "focus_" + currentMode + "_" + currentCat + "_" + pid;
                   int savedPos = settingsPref.getInt(focusKey, 0);
-                  if (savedPos >= 0 && savedPos < currentItems.size() && rvI.getLayoutManager() != null) {
-                      handler.postDelayed(() -> {
-                          rvI.scrollToPosition(savedPos);
-                          View focusedView = rvI.getLayoutManager().findViewByPosition(savedPos);
-                          if (focusedView != null) {
-                              focusedView.requestFocus();
-                              // ✅ اهتزاز خفيف عند استعادة التركيز
-                              if (vibrator != null) try { vibrator.vibrate(20); } catch(Exception e){}
-                          }
-                      }, 100);
-                  }
+                  if (savedPos >= 0 && savedPos < currentItems.size()) { handler.postDelayed(() -> { rvI.scrollToPosition(savedPos); View f = rvI.getLayoutManager().findViewByPosition(savedPos); if(f!=null) f.requestFocus(); }, 100); }
               }
 
               private void parse(String text) {
@@ -544,20 +424,10 @@ jobs:
                   List<String> g; GroupAdapter(List<String> g) { this.g = g; }
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_channel, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
-                      h.n.setText(g.get(i));
-                      // ✅ شعار دائري للأقسام مثل أيقونة الترحيب
-                      RequestOptions groupLogoOptions = new RequestOptions().transform(new CircleCrop()).placeholder(R.drawable.app_logo_circle).error(R.drawable.app_logo_circle).diskCacheStrategy(DiskCacheStrategy.ALL);
-                      Glide.with(h.itemView).load("https://f.top4top.io/p_3734etr9q0.jpg").apply(groupLogoOptions).into(h.img);
-                      
+                      h.n.setText(g.get(i)); Glide.with(h.itemView).load("https://f.top4top.io/p_3734etr9q0.jpg").apply(new RequestOptions().transform(new CircleCrop())).into(h.img);
+                      // ✅ تحسين 5: تأثيرات بصرية احترافية (Animations & Vibrations)
                       h.itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                          if (hasFocus) { 
-                              v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start(); 
-                              v.setBackgroundResource(R.drawable.round_btn_orange);
-                              // ✅ اهتزاز عند التركيز لأندرويد تفي
-                              if (vibrator != null) try { vibrator.vibrate(25); } catch(Exception e){}
-                              // ✅ حفظ موضع التركيز
-                              settingsPref.edit().putInt("focus_" + currentMode + "_" + currentCat + "_group", i).apply();
-                          }
+                          if (hasFocus) { v.animate().scaleX(1.1f).scaleY(1.1f).setDuration(200).start(); v.setBackgroundResource(R.drawable.round_btn_orange); if (vibrator != null) try { vibrator.vibrate(25); } catch(Exception e){} }
                           else { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start(); v.setBackgroundResource(R.drawable.tab_button_style); }
                       });
                       h.itemView.setOnClickListener(v -> { currentCat = g.get(i); renderGallery("root"); });
@@ -571,44 +441,28 @@ jobs:
                   public int getItemViewType(int p) { return currentMode.equals("live") ? 0 : 1; }
                   public VH onCreateViewHolder(ViewGroup p, int t) { return new VH(LayoutInflater.from(p.getContext()).inflate(t==0?R.layout.item_channel:R.layout.item_card, p, false)); }
                   public void onBindViewHolder(VH h, int i) {
-                      Ch c = items.get(i); h.n.setText(c.n); 
-                      // ✅ شعار دائري مع فالباك للشعار الدائري للتطبيق
+                      Ch c = items.get(i); h.n.setText(c.n);
                       RequestOptions circularRequest = new RequestOptions().transform(new CircleCrop()).placeholder(R.drawable.app_logo_circle).error(R.drawable.app_logo_circle).diskCacheStrategy(DiskCacheStrategy.ALL);
                       Glide.with(h.itemView).load(c.l).apply(circularRequest).into(h.img);
-                      
                       h.itemView.setOnFocusChangeListener((v, hasFocus) -> {
-                          if (hasFocus) { 
-                              v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(200).start(); 
-                              v.setElevation(20f);
-                              // ✅ اهتزاز عند التركيز لأندرويد تفي
-                              if (vibrator != null) try { vibrator.vibrate(30); } catch(Exception e){}
-                              // ✅ حفظ موضع التركيز لكل عنصر
-                              settingsPref.edit().putInt("focus_" + currentMode + "_" + currentCat + "_" + currentPid, i).apply();
-                          }
+                          if (hasFocus) { v.animate().scaleX(1.08f).scaleY(1.08f).setDuration(200).start(); v.setElevation(20f); if (vibrator != null) try { vibrator.vibrate(30); } catch(Exception e){} settingsPref.edit().putInt("focus_" + currentMode + "_" + currentCat + "_" + currentPid, i).apply(); }
                           else { v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(200).start(); v.setElevation(0f); }
                       });
-                      h.itemView.setOnClickListener(v -> {
-                          if ("1".equals(c.isF)) { historyStack.push(c.pid); renderGallery(c.id); }
-                          else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); }
-                      });
+                      h.itemView.setOnClickListener(v -> { if ("1".equals(c.isF)) { historyStack.push(c.pid); renderGallery(c.id); } else { long t = System.currentTimeMillis(); boolean isDouble = (t - lastClickTime < 500); lastClickTime = t; playChannel(c, i, isDouble); } });
                   }
                   public int getItemCount() { return items.size(); }
                   class VH extends RecyclerView.ViewHolder { TextView n; ImageView img; VH(View v) { super(v); n = v.findViewById(R.id.txt_name); img = v.findViewById(R.id.img_logo); v.setFocusable(true); } }
               }
               private Runnable hideOverlay = () -> overlay.setVisibility(View.GONE);
-              @Override protected void onDestroy() { super.onDestroy(); player.release(); vlcMediaPlayer.release(); libVLC.release(); }
           }
           JAVAEOF
 
-          # ✅ إضافة إذن الاهتزاز في المانيفست
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-feature android:name="android.software.leanback" android:required="false" />
               <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
-              <uses-permission android:name="android.permission.INTERNET"/>
-              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-              <uses-permission android:name="android.permission.VIBRATE"/>
+              <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/><uses-permission android:name="android.permission.VIBRATE"/>
               <application android:theme="@style/Theme.AppCompat.NoActionBar" android:usesCleartextTraffic="true" android:networkSecurityConfig="@xml/network_security_config" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:banner="@drawable/app_logo">
                   <meta-data android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME" android:value="com.rabie.iptv.CastOptionsProvider"/>
                   <activity android:name="com.rabie.iptv.MainActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation">
@@ -618,7 +472,6 @@ jobs:
           </manifest>
           EOF
 
-          # ✅ باقي الملفات كما هي
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval"><solid android:color="#25FFFFFF"/><stroke android:width="1dp" android:color="#40FFFFFF"/></shape>
           EOF
@@ -655,9 +508,7 @@ jobs:
 
           cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
           package com.rabie.iptv;
-          import android.content.Context;
-          import com.google.android.gms.cast.framework.*;
-          import java.util.List;
+          import android.content.Context; import com.google.android.gms.cast.framework.*; import java.util.List;
           public class CastOptionsProvider implements OptionsProvider {
               @Override public CastOptions getCastOptions(Context context) { return new CastOptions.Builder().setReceiverApplicationId("CC1AD845").build(); }
               @Override public List<SessionProvider> getAdditionalSessionProviders(Context context) { return null; }
@@ -671,12 +522,6 @@ jobs:
               compileSdk 34
               defaultConfig { applicationId "com.rabie.iptv"; minSdk 21; targetSdk 34; versionCode 41; versionName "41.0" }
               compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
-              configurations.all {
-                  resolutionStrategy {
-                      exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk8"
-                      exclude group: "org.jetbrains.kotlin", module: "kotlin-stdlib-jdk7"
-                  }
-              }
           }
           dependencies { 
               implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -689,7 +534,7 @@ jobs:
               implementation 'com.github.bumptech.glide:glide:4.16.0'
               implementation 'androidx.mediarouter:mediarouter:1.7.0'
               implementation 'com.google.android.gms:play-services-cast-framework:21.4.0'
-              implementation ('org.videolan.android:libvlc-all:3.6.0-eap11') { exclude group: 'org.jetbrains.kotlin' }
+              implementation 'org.videolan.android:libvlc-all:3.6.0-eap11'
           }
           EOF
 
@@ -699,4 +544,4 @@ jobs:
 
       - name: Upload_Apk
         uses: actions/upload-artifact@v4
-        with: { name: Rabie_Pro_V41_Final_Fixed_V3, path: app/build/outputs/apk/debug/*.apk }
+        with: { name: Rabie_Pro_V41_Ultimate_10_10, path: app/build/outputs/apk/debug/*.apk }
