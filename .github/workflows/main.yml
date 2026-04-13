@@ -33,7 +33,6 @@ jobs:
           curl -Lo app/src/main/res/mipmap-xxxhdpi/ic_launcher.png https://f.top4top.io/p_3734etr9q0.jpg
           curl -Lo app/src/main/res/drawable/app_logo.png https://f.top4top.io/p_3734etr9q0.jpg
 
-          # ✅ شعار دائري للعناصر بدون لوجو + خلفية متدرجة أنيقة
           cat <<'CIRCLOGO' > app/src/main/res/drawable/app_logo_circle.xml
           <?xml version="1.0" encoding="utf-8"?>
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
@@ -47,7 +46,6 @@ jobs:
           </layer-list>
           CIRCLOGO
 
-          # ✅ Drawable للوجو السريع عند العودة للمشغل الصغير
           cat <<'FASTLOGO' > app/src/main/res/drawable/player_quick_preview.xml
           <?xml version="1.0" encoding="utf-8"?>
           <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
@@ -113,11 +111,8 @@ jobs:
                           <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.65" app:cardCornerRadius="15dp" app:cardBackgroundColor="#000" app:cardElevation="12dp">
                               <androidx.media3.ui.PlayerView android:id="@+id/small_player" android:layout_width="match_parent" android:layout_height="match_parent" app:use_controller="false" app:resize_mode="fill"/>
                               <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_small" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                              <!-- ✅ عجلة تحميل عند الانقطاع/البفر -->
                               <ProgressBar android:id="@+id/loading_s" android:layout_width="50dp" android:layout_height="50dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100" android:indeterminate="true"/>
-                              <!-- ✅ صورة سريعة عند العودة من المشغل الكبير -->
                               <ImageView android:id="@+id/quick_preview_small" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/player_quick_preview" android:scaleType="centerCrop" android:visibility="gone" android:alpha="0.9"/>
-                              <!-- ✅ طبقة منع الشاشة السوداء -->
                               <View android:id="@+id/player_placeholder_small" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/buffer_bg" android:visibility="gone"/>
                           </androidx.cardview.widget.CardView>
                           <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="0.35" android:padding="20dp" android:layout_marginTop="10dp" android:background="@drawable/tab_button_style" android:orientation="vertical">
@@ -133,11 +128,8 @@ jobs:
               <FrameLayout android:id="@+id/full_container" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone" android:background="#000" android:focusable="true" android:clickable="true" android:descendantFocusability="afterDescendants">
                   <androidx.media3.ui.PlayerView android:id="@+id/full_player" android:layout_width="match_parent" android:layout_height="match_parent" app:resize_mode="fill" app:use_controller="false" />
                   <org.videolan.libvlc.util.VLCVideoLayout android:id="@+id/vlc_layout_full" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"/>
-                  <!-- ✅ عجلة تحميل عند الانقطاع/البفر -->
                   <ProgressBar android:id="@+id/loading_f" android:layout_width="80dp" android:layout_height="80dp" android:layout_gravity="center" android:visibility="gone" android:indeterminateTint="#ff9100" android:indeterminate="true"/>
-                  <!-- ✅ طبقة منع الشاشة السوداء -->
                   <View android:id="@+id/player_placeholder_full" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@color/buffer_bg" android:visibility="gone"/>
-                  <!-- ✅ صورة سريعة عند التحميل -->
                   <ImageView android:id="@+id/quick_preview_full" android:layout_width="match_parent" android:layout_height="match_parent" android:src="@drawable/player_quick_preview" android:scaleType="centerCrop" android:visibility="gone" android:alpha="0.85"/>
                   
                   <LinearLayout android:id="@+id/overlay_full" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="bottom" android:visibility="gone" android:clickable="true">
@@ -171,7 +163,6 @@ jobs:
           </RelativeLayout>
           EOF
 
-          # ✅ كود الجافا الكامل مع جميع التحسينات المطلوبة
           cat <<'JAVAEOF' > app/src/main/java/com/rabie/iptv/MainActivity.java
           package com.rabie.iptv;
           import android.content.Context;
@@ -182,6 +173,7 @@ jobs:
           import android.net.NetworkInfo;
           import android.net.Uri;
           import android.os.*;
+          import android.app.ActivityManager;
           import android.util.DisplayMetrics;
           import android.view.*;
           import android.widget.*;
@@ -254,20 +246,17 @@ jobs:
                   settingsPref = getSharedPreferences("app_settings", MODE_PRIVATE);
                   currentPlayerMode = settingsPref.getString("player_type", "ExoPlayer");
                   
-                  // ✅ تهيئة الاهتزاز مع دعم الأجهزة القديمة
                   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                       vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
                   } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
                       vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
                   }
                   
-                  // ✅ إدارة الشبكة لاكتشاف الانقطاع
                   connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
                   MediaRouteButton mrb = findViewById(R.id.media_route_button);
                   try { CastButtonFactory.setUpMediaRouteButton(getApplicationContext(), mrb); } catch(Exception e){}
 
-                  // ✅ تهيئة العناصر مع Null Safety للأجهزة القديمة
                   splash = findViewById(R.id.splash_screen); 
                   mainUI = findViewById(R.id.main_ui_container);
                   leftSide = findViewById(R.id.left_side_container); 
@@ -295,7 +284,6 @@ jobs:
                   rvG = findViewById(R.id.rv_groups); 
                   rvI = findViewById(R.id.rv_items);
 
-                  // ✅ خيارات Glide للشعارات الدائرية مع كاش سريع
                   circularOptions = new RequestOptions()
                       .transform(new CircleCrop())
                       .placeholder(R.drawable.app_logo_circle)
@@ -303,7 +291,6 @@ jobs:
                       .diskCacheStrategy(DiskCacheStrategy.ALL)
                       .skipMemoryCache(false);
 
-                  // ✅ شاشة البداية مع تأخير مناسب للأجهزة الضعيفة
                   int splashDelay = isLowEndDevice() ? 3000 : 2000;
                   mainHandler.postDelayed(() -> { 
                       if (splash != null) splash.setVisibility(View.GONE); 
@@ -311,7 +298,6 @@ jobs:
                       checkNetworkAndResume();
                   }, splashDelay);
 
-                  // ✅ تهيئة ExoPlayer مع تحسينات البفر والسرعة
                   DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                       .setBufferDurationsMs(15000, 40000, 1000, 2000)
                       .setPrioritizeTimeOverSizeThresholds(true)
@@ -339,7 +325,6 @@ jobs:
                       fullPV.setUseController(false);
                   }
 
-                  // ✅ مستمع حالة التشغيل مع معالجة الانقطاع
                   player.addListener(new Player.Listener() {
                       @Override public void onPlaybackStateChanged(int state) {
                           runOnUiThread(() -> {
@@ -373,7 +358,6 @@ jobs:
                       }
                   });
 
-                  // ✅ تهيئة VLC مع خيارات كاش محسنة
                   ArrayList<String> vlcOptions = new ArrayList<>();
                   vlcOptions.add("--file-caching=1500"); 
                   vlcOptions.add("--network-caching=1500");
@@ -411,7 +395,6 @@ jobs:
                       }
                   });
 
-                  // ✅ أزرار التحكم
                   if (findViewById(R.id.btn_settings) != null) findViewById(R.id.btn_settings).setOnClickListener(v -> showSettings());
                   if (btnPP != null) btnPP.setOnClickListener(v -> togglePlay());
                   if (findViewById(R.id.btn_rew) != null) findViewById(R.id.btn_rew).setOnClickListener(v -> seek(-10000));
@@ -429,7 +412,6 @@ jobs:
                   if (fullFavBtn != null) fullFavBtn.setOnClickListener(v -> toggleFav());
                   if (findViewById(R.id.btn_toggle_fav) != null) findViewById(R.id.btn_toggle_fav).setOnClickListener(v -> toggleFav());
 
-                  // ✅ تهيئة RecyclerViews مع تحسين الأداء للأجهزة القديمة
                   if (rvG != null) {
                       rvG.setLayoutManager(new LinearLayoutManager(this));
                       rvG.setHasFixedSize(true);
@@ -446,7 +428,6 @@ jobs:
                   startStallWatcher();
                   startNetworkMonitor();
 
-                  // ✅ معالجة زر الرجوع
                   getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                       @Override public void handleOnBackPressed() {
                           if (fullCont != null && fullCont.getVisibility() == View.VISIBLE) { 
@@ -459,14 +440,12 @@ jobs:
                       }
                   });
 
-                  // ✅ أزرار التبويب
                   if (findViewById(R.id.tab_live) != null) findViewById(R.id.tab_live).setOnClickListener(v -> setMode("live"));
                   if (findViewById(R.id.tab_movie) != null) findViewById(R.id.tab_movie).setOnClickListener(v -> setMode("movie"));
                   if (findViewById(R.id.tab_series) != null) findViewById(R.id.tab_series).setOnClickListener(v -> setMode("series"));
                   if (findViewById(R.id.tab_fav) != null) findViewById(R.id.tab_fav).setOnClickListener(v -> setMode("fav"));
               }
 
-              // ✅ فحص الجهاز الضعيف لتحسين الأداء
               private boolean isLowEndDevice() {
                   ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
                   if (am != null && am.getMemoryClass() < 128) return true;
@@ -476,7 +455,6 @@ jobs:
                   return false;
               }
 
-              // ✅ مراقبة حالة الشبكة
               private void startNetworkMonitor() {
                   mainHandler.postDelayed(new Runnable() {
                       @Override public void run() {
@@ -521,7 +499,6 @@ jobs:
                   if (pf != null) pf.setVisibility(View.GONE);
               }
 
-              // ✅ تحديث مؤشرات التحميل مع منع الشاشة السوداء
               private void updateLoadingIndicators(boolean show) {
                   runOnUiThread(() -> {
                       if (show) {
@@ -545,7 +522,6 @@ jobs:
                   });
               }
 
-              // ✅ إخفاء صور المعاينة السريعة
               private void hideQuickPreviews() {
                   if (quickPreviewSmall != null) quickPreviewSmall.setVisibility(View.GONE);
                   if (quickPreviewFull != null) quickPreviewFull.setVisibility(View.GONE);
@@ -602,7 +578,6 @@ jobs:
                   });
               }
 
-              // ✅ إظهار صورة سريعة فورية عند التبديل
               private void showQuickPreview() {
                   runOnUiThread(() -> {
                       if (quickPreviewSmall != null) quickPreviewSmall.setVisibility(View.VISIBLE);
@@ -618,7 +593,6 @@ jobs:
                   if (tTitle != null) tTitle.setText(c.n != null ? c.n : "غير معروف");
                   if (tFullChName != null) tFullChName.setText(c.n != null ? c.n : "غير معروف");
                   
-                  // ✅ تحميل الشعار الدائري مع كاش فوري
                   if (fullChLogo != null && c.l != null && !c.l.isEmpty()) {
                       Glide.with(this).load(c.l).apply(circularOptions).into(fullChLogo);
                   } else if (fullChLogo != null) {
@@ -706,7 +680,6 @@ jobs:
                               if (vlcMediaPlayer != null) vlcMediaPlayer.setVideoScale(MediaPlayer.ScaleType.SURFACE_FILL);
                           }, 100);
                       } else {
-                          // ✅ انتقال ناعم مع صورة سريعة
                           if (fullPV != null) {
                               fullPV.setAlpha(0f);
                               fullPV.setVisibility(View.VISIBLE);
@@ -746,7 +719,6 @@ jobs:
                           hideQuickPreviews();
                           updateLoadingIndicators(false);
                       } else {
-                          // ✅ عودة سريعة مع صورة فورية في المشغل الصغير
                           if (quickPreviewSmall != null) quickPreviewSmall.setVisibility(View.VISIBLE);
                           if (player != null && smallPV != null && fullPV != null) {
                               PlayerView.switchTargetView(player, fullPV, smallPV);
@@ -985,7 +957,6 @@ jobs:
                   currentItems = filtered; 
                   if (rvI != null) rvI.setAdapter(new ItemAdapter(currentItems));
                   
-                  // ✅ استعادة موضع التركيز مع تأخير مناسب
                   String focusKey = "focus_" + currentMode + "_" + (currentCat != null ? currentCat : "") + "_" + currentPid;
                   int savedPos = settingsPref.getInt(focusKey, 0);
                   if (savedPos >= 0 && savedPos < (currentItems != null ? currentItems.size() : 0) && rvI != null && rvI.getLayoutManager() != null) {
@@ -1068,7 +1039,6 @@ jobs:
 
               private Runnable hideOverlay = () -> { if (overlay != null) overlay.setVisibility(View.GONE); };
 
-              // ✅ Adapter المجموعات مع تحسين التركيز والأداء
               class GroupAdapter extends RecyclerView.Adapter<GroupAdapter.VH> {
                   List<String> g; 
                   GroupAdapter(List<String> g) { this.g = g != null ? g : new ArrayList<>(); }
@@ -1109,7 +1079,6 @@ jobs:
                   }
               }
 
-              // ✅ Adapter العناصر مع شعار دائري وتحسينات الأداء
               class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.VH> {
                   List<Ch> items; 
                   ItemAdapter(List<Ch> i) { items = i != null ? i : new ArrayList<>(); }
@@ -1125,7 +1094,6 @@ jobs:
                       
                       if (h.n != null) h.n.setText(c.n != null ? c.n : "غير معروف");
                       
-                      // ✅ شعار دائري مع فالباك ومعالجة الأخطاء
                       if (h.img != null) {
                           if (c.l != null && !c.l.isEmpty()) {
                               Glide.with(h.itemView.getContext())
@@ -1180,7 +1148,6 @@ jobs:
           }
           JAVAEOF
 
-          # ✅ المانيفست مع أذونات وتحسينات التوافق
           cat <<EOF > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -1217,7 +1184,6 @@ jobs:
           </manifest>
           EOF
 
-          # ✅ ملفات الـ Drawables
           cat <<EOF > app/src/main/res/drawable/round_btn.xml
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
               <solid android:color="#25FFFFFF"/>
@@ -1269,7 +1235,6 @@ jobs:
           </selector>
           EOF
 
-          # ✅ Layouts العناصر
           cat <<EOF > app/src/main/res/layout/item_channel.xml
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
               android:layout_width="match_parent" android:layout_height="wrap_content" 
@@ -1305,7 +1270,6 @@ jobs:
           </androidx.cardview.widget.CardView>
           EOF
 
-          # ✅ Cast Provider
           cat <<EOF > app/src/main/java/com/rabie/iptv/CastOptionsProvider.java
           package com.rabie.iptv;
           import android.content.Context;
@@ -1321,7 +1285,6 @@ jobs:
           }
           EOF
 
-          # ✅ build.gradle مع تحسينات التوافق
           cat <<EOF > app/build.gradle
           plugins { id 'com.android.application' version '8.2.2' }
           android { 
