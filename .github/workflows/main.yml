@@ -192,8 +192,9 @@ jobs:
               private RecyclerView rvG, rvI;
               private TextView tTitle, tTime, tFullChName;
               private PlayerView smallPV, fullPV;
-              private View mainUI, fullCont, overlay, vodControls, splash, leftSide, placeholderSmall, placeholderFull, quickPreviewSmall;
-              private ImageView fullChLogo, fullFavBtn;
+              // ✅ تم فصل quickPreviewSmall كـ ImageView لإصلاح الخطأ
+              private View mainUI, fullCont, overlay, vodControls, splash, leftSide, placeholderSmall, placeholderFull;
+              private ImageView quickPreviewSmall, fullChLogo, fullFavBtn;
               private SeekBar seekBar;
               private ProgressBar ps, pf;
               private ImageButton btnPP;
@@ -336,7 +337,6 @@ jobs:
                   currentCh = c;
                   tTitle.setText(c.n); tFullChName.setText(c.n); 
                   
-                  // ✅ حفظ الصورة الحالية للقناة
                   if (c.l != null && !c.l.isEmpty()) {
                       RequestOptions circularRequest = new RequestOptions().transform(new CircleCrop()).placeholder(R.drawable.app_logo_circle).error(R.drawable.app_logo_circle).diskCacheStrategy(DiskCacheStrategy.ALL);
                       Glide.with(this).asBitmap().load(c.l).apply(circularRequest).into(new SimpleTarget<Bitmap>() {
@@ -379,7 +379,6 @@ jobs:
                   placeholderSmall.setVisibility(View.VISIBLE); placeholderFull.setVisibility(View.VISIBLE);
                   
                   if (full) {
-                      // ✅ حفظ موضع الفوكس قبل فتح المشغل الكبير
                       View focusedView = rvI.findFocus();
                       if (focusedView != null) {
                           int pos = rvI.getChildAdapterPosition(focusedView);
@@ -411,7 +410,6 @@ jobs:
                   } else {
                       fullCont.setVisibility(View.GONE); mainUI.setVisibility(View.VISIBLE);
                       
-                      // ✅ إظهار الصورة فوراً عند الرجوع للمشغل الصغير
                       if (currentChannelImage != null && quickPreviewSmall != null) {
                           quickPreviewSmall.setImageBitmap(currentChannelImage);
                           quickPreviewSmall.setVisibility(View.VISIBLE);
@@ -428,7 +426,6 @@ jobs:
                           placeholderSmall.setVisibility(View.GONE);
                       }
                       
-                      // ✅ استعادة الفوكس للقناة أو الفلم
                       handler.postDelayed(() -> {
                           if (lastFocusedPos >= 0 && rvI != null && rvI.getLayoutManager() != null) {
                               rvI.scrollToPosition(lastFocusedPos);
